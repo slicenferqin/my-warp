@@ -119,27 +119,27 @@ pub fn get_additional_keybindings() -> Vec<CommandBinding> {
     vec![
         CommandBinding::new(
             "workspace:new_window".into(),
-            "Open New Window".into(),
+            warp_i18n::tr("resource-center-keybinding-open-new-window").into(),
             Some(Keystroke::parse("cmd-n").expect("Valid keystroke")),
         ),
         CommandBinding::new(
             "workspace:hide_warp".into(),
-            "Hide Warp".into(),
+            warp_i18n::tr("resource-center-keybinding-hide-warp").into(),
             Some(Keystroke::parse("cmd-h").expect("Valid keystroke")),
         ),
         CommandBinding::new(
             "workspace:hide_others".into(),
-            "Hide Others".into(),
+            warp_i18n::tr("resource-center-keybinding-hide-others").into(),
             Some(Keystroke::parse("alt-cmd-h").expect("Valid keystroke")),
         ),
         CommandBinding::new(
             "workspace:quit_warp".into(),
-            "Quit Warp".into(),
+            warp_i18n::tr("resource-center-keybinding-quit-warp").into(),
             Some(Keystroke::parse("cmd-q").expect("Valid keystroke")),
         ),
         CommandBinding::new(
             "workspace:minimize".into(),
-            "Minimize".into(),
+            warp_i18n::tr("resource-center-keybinding-minimize").into(),
             Some(Keystroke::parse("cmd-m").expect("Valid keystroke")),
         ),
     ]

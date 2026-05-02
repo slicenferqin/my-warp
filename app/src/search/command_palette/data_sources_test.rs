@@ -253,7 +253,13 @@ fn test_drive_data_source_correctly_filters_workflow_filter() {
             // Expect only the workflow result to be included
             assert_eq!(results.len(), 1);
 
-            assert!(results[0].accessibility_label().starts_with("Workflow:"));
+            let expected_prefix = warp_i18n::tr_with_args(
+                "command-palette-workflow-accessibility-label",
+                &[("name", "")],
+            );
+            assert!(results[0]
+                .accessibility_label()
+                .starts_with(&expected_prefix));
         });
     })
 }
@@ -302,7 +308,13 @@ fn test_drive_data_source_correctly_filters_notebook_filter() {
             // Expect only the workflow result to be included
             assert_eq!(results.len(), 1);
 
-            assert!(results[0].accessibility_label().starts_with("Notebook:"));
+            let expected_prefix = warp_i18n::tr_with_args(
+                "command-palette-notebook-accessibility-label",
+                &[("title", "")],
+            );
+            assert!(results[0]
+                .accessibility_label()
+                .starts_with(&expected_prefix));
         });
     })
 }

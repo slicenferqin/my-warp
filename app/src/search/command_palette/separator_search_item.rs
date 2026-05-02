@@ -66,7 +66,10 @@ impl SearchItem for SeparatorSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Section: {}", self.title)
+        warp_i18n::tr_with_args(
+            "command-palette-section-accessibility-label",
+            &[("title", &self.title)],
+        )
     }
 
     fn is_static_separator(&self) -> bool {

@@ -66,7 +66,7 @@ impl ConversationSearchItem {
         Flex::row()
             .with_child(
                 Text::new_inline(
-                    "New conversation",
+                    warp_i18n::tr("command-palette-new-conversation"),
                     appearance.ui_font_family(),
                     appearance.monospace_font_size(),
                 )
@@ -87,7 +87,7 @@ impl ConversationSearchItem {
         let appearance = Appearance::as_ref(app);
 
         let action_title = Text::new_inline(
-            "Fork current conversation",
+            warp_i18n::tr("command-palette-fork-current-conversation"),
             appearance.ui_font_family(),
             appearance.monospace_font_size(),
         )
@@ -241,7 +241,7 @@ impl ConversationSearchItem {
 
             let fork_button_tool_tip = appearance
                 .ui_builder()
-                .tool_tip("Fork conversation".to_string())
+                .tool_tip(warp_i18n::tr("command-palette-fork-conversation-tooltip"))
                 .build();
 
             let fork_button_inner = icon_button(
@@ -412,29 +412,30 @@ impl SearchItem for ConversationSearchItem {
 
     fn accessibility_label(&self) -> String {
         match &self.action_info {
-            ConversationAction::Resume(matched_conversation) => {
-                format!(
-                    "Conversation: {}",
-                    matched_conversation.as_ref().conversation.title()
-                )
-            }
-            ConversationAction::Fork { title, .. } => {
-                format!("Fork current conversation ({title})")
-            }
-            ConversationAction::New => "New conversation".to_string(),
+            ConversationAction::Resume(matched_conversation) => warp_i18n::tr_with_args(
+                "command-palette-conversation-accessibility-label",
+                &[("title", matched_conversation.as_ref().conversation.title())],
+            ),
+            ConversationAction::Fork { title, .. } => warp_i18n::tr_with_args(
+                "command-palette-fork-conversation-accessibility-label",
+                &[("title", title)],
+            ),
+            ConversationAction::New => warp_i18n::tr("command-palette-new-conversation"),
         }
     }
 
     fn accessibility_help_message(&self) -> Option<String> {
         match &self.action_info {
-            ConversationAction::Resume(matched_conversation) => Some(format!(
-                "Press enter to navigate to conversation \"{}\".",
-                matched_conversation.as_ref().conversation.title()
+            ConversationAction::Resume(matched_conversation) => Some(warp_i18n::tr_with_args(
+                "command-palette-conversation-accessibility-help-navigate",
+                &[("title", matched_conversation.as_ref().conversation.title())],
             )),
-            ConversationAction::Fork { .. } => {
-                Some("Press enter to fork the current conversation into a new conversation.".into())
-            }
-            ConversationAction::New => Some("Press enter to create a new conversation.".into()),
+            ConversationAction::Fork { .. } => Some(warp_i18n::tr(
+                "command-palette-fork-conversation-accessibility-help",
+            )),
+            ConversationAction::New => Some(warp_i18n::tr(
+                "command-palette-new-conversation-accessibility-help",
+            )),
         }
     }
 }

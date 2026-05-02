@@ -36,13 +36,13 @@ pub enum FeatureSection {
 }
 
 impl FeatureSection {
-    pub fn section_name_string(&self) -> &'static str {
-        match self {
-            FeatureSection::WhatsNew => "What's New?",
-            FeatureSection::GettingStarted => "Getting Started",
-            FeatureSection::MaximizeWarp => "Maximize Warp",
-            FeatureSection::AdvancedSetup => "Advanced Setup",
-        }
+    pub fn section_name_string(&self) -> String {
+        warp_i18n::tr(match self {
+            FeatureSection::WhatsNew => "resource-center-section-whats-new",
+            FeatureSection::GettingStarted => "resource-center-section-getting-started",
+            FeatureSection::MaximizeWarp => "resource-center-section-maximize-warp",
+            FeatureSection::AdvancedSetup => "resource-center-section-advanced-setup",
+        })
     }
 }
 
@@ -211,7 +211,7 @@ impl FeatureSectionView {
             Container::new(
                 appearance
                     .ui_builder()
-                    .wrappable_text(item.title.to_string(), true)
+                    .wrappable_text(item.title.clone(), true)
                     .with_style(UiComponentStyles {
                         font_size: Some(DESCRIPTION_FONT_SIZE),
                         font_color: (Some(title_color.into())),
@@ -235,7 +235,7 @@ impl FeatureSectionView {
     ) -> Box<dyn Element> {
         appearance
             .ui_builder()
-            .wrappable_text(item.description.to_string(), true)
+            .wrappable_text(item.description.clone(), true)
             .with_style(UiComponentStyles {
                 font_size: Some(DESCRIPTION_FONT_SIZE),
                 font_color: Some(color.into()),

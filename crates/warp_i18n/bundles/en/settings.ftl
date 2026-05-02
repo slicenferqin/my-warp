@@ -1068,6 +1068,7 @@ settings-reset-to-default = Reset to default
 settings-environments-new-environment = New environment
 settings-privacy-zdr-badge = ZDR
 settings-warpify-ssh-sessions = Warpify SSH Sessions
+settings-workspace-override-tooltip = This option is enforced by your organization's settings and cannot be customized.
 command-palette-open-settings = Open Settings
 command-palette-open-settings-account = Open Settings: Account
 command-palette-open-settings-appearance = Open Settings: Appearance

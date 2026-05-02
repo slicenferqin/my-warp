@@ -13,8 +13,6 @@ use crate::{
 };
 
 const DEFAULT_DROPDOWN_WIDTH: f32 = 380.;
-/// Placeholder text shown in the dropdown top bar while branches are loading.
-const LOADING_PLACEHOLDER: &str = "Fetching branches\u{2026}";
 
 /// A filterable dropdown that lists local git branches for the given repo path.
 ///
@@ -124,9 +122,10 @@ impl BranchPicker {
             dropdown.set_disabled(ctx);
             // Show loading text in the dropdown top bar so the modal
             // doesn't shift layout while the fetch is in-flight.
-            let placeholder = DropdownItem::new(LOADING_PLACEHOLDER.to_string(), String::new());
+            let loading_placeholder = warp_i18n::tr("app-tab-config-fetching-branches");
+            let placeholder = DropdownItem::new(loading_placeholder.clone(), String::new());
             dropdown.set_items(vec![placeholder], ctx);
-            dropdown.set_selected_by_name(LOADING_PLACEHOLDER, ctx);
+            dropdown.set_selected_by_name(loading_placeholder.as_str(), ctx);
         });
 
         self.fetch_epoch += 1;

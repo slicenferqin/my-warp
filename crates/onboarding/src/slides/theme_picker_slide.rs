@@ -128,6 +128,15 @@ impl ThemePickerSlide {
             .unwrap_or_else(|| format!("Theme {}", index + 1))
     }
 
+    fn localized_theme_display_name(&self, index: usize) -> String {
+        let theme_name = self.theme_display_name(index);
+        match theme_name.as_str() {
+            "Dark" => warp_i18n::tr("app-onboarding-theme-name-dark"),
+            "Light" => warp_i18n::tr("app-onboarding-theme-name-light"),
+            _ => theme_name,
+        }
+    }
+
     fn render_theme_picker_content(
         &self,
         appearance: &Appearance,
@@ -188,7 +197,7 @@ impl ThemePickerSlide {
     fn render_header_text(&self, appearance: &Appearance) -> Box<dyn Element> {
         let title = appearance
             .ui_builder()
-            .paragraph("Choose a theme")
+            .paragraph(warp_i18n::tr("app-onboarding-theme-title"))
             .with_style(UiComponentStyles {
                 font_size: Some(36.),
                 font_weight: Some(Weight::Medium),
@@ -198,7 +207,7 @@ impl ThemePickerSlide {
             .finish();
 
         let subtitle = FormattedTextElement::from_str(
-            "Click or use arrow keys to select, Enter to confirm.",
+            warp_i18n::tr("app-onboarding-theme-subtitle"),
             appearance.ui_font_family(),
             16.,
         )
@@ -226,7 +235,7 @@ impl ThemePickerSlide {
     ) -> Box<dyn Element> {
         let options = (0..self.theme_options.len())
             .map(|index| {
-                let theme_name = self.theme_display_name(index);
+                let theme_name = self.localized_theme_display_name(index);
                 let option = &self.theme_options[index];
 
                 self.render_theme_option(
@@ -255,7 +264,7 @@ impl ThemePickerSlide {
         let back_button = self.back_button.render(
             appearance,
             button::Params {
-                content: button::Content::Label("Back".into()),
+                content: button::Content::Label(warp_i18n::tr("common-back").into()),
                 theme: &button::themes::Naked,
                 options: button::Options {
                     on_click: Some(Box::new(|ctx, _app, _pos| {
@@ -268,9 +277,9 @@ impl ThemePickerSlide {
 
         let theme_picker_last = FeatureFlag::OpenWarpNewSettingsModes.is_enabled();
         let next_label = if theme_picker_last {
-            "Get Warping"
+            warp_i18n::tr("app-onboarding-get-warping")
         } else {
-            "Next"
+            warp_i18n::tr("common-next")
         };
 
         let enter = Keystroke::parse("enter").unwrap_or_default();
@@ -526,7 +535,7 @@ impl ThemePickerSlide {
             .finish();
 
         let label = Text::new(
-            "Sync light/dark theme with OS",
+            warp_i18n::tr("app-onboarding-theme-sync-with-os"),
             appearance.ui_font_family(),
             14.0,
         )
@@ -570,7 +579,7 @@ impl ThemePickerSlide {
         let privacy_line = Flex::row()
             .with_child(
                 ui_builder
-                    .span("If you'd like to opt out of analytics, you can adjust your ")
+                    .span(warp_i18n::tr("app-auth-opt-out-analytics-inline"))
                     .with_style(disclaimer_styles)
                     .build()
                     .finish(),
@@ -578,7 +587,7 @@ impl ThemePickerSlide {
             .with_child(
                 ui_builder
                     .link(
-                        "Privacy Settings".into(),
+                        warp_i18n::tr("app-auth-privacy-settings"),
                         None,
                         Some(Box::new(|ctx| {
                             ctx.dispatch_typed_action(
@@ -597,7 +606,7 @@ impl ThemePickerSlide {
         let tos_line = Flex::row()
             .with_child(
                 ui_builder
-                    .span("By continuing, you agree to Warp's ")
+                    .span(warp_i18n::tr("app-auth-by-continuing-agree"))
                     .with_style(disclaimer_styles)
                     .build()
                     .finish(),
@@ -605,7 +614,7 @@ impl ThemePickerSlide {
             .with_child(
                 ui_builder
                     .link(
-                        "Terms of Service".into(),
+                        warp_i18n::tr("app-auth-terms-of-service"),
                         Some(TOS_URL.into()),
                         None,
                         self.tos_mouse_state.clone(),

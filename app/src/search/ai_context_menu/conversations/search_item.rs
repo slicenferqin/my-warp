@@ -124,6 +124,9 @@ impl SearchItem for ConversationSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Conversation: {}", self.item.title)
+        warp_i18n::tr_with_args(
+            "ai-context-menu-conversation-accessibility-label",
+            &[("title", &self.item.title)],
+        )
     }
 }

@@ -47,14 +47,14 @@ impl SessionType {
     }
 
     /// Short label for the session type pill in the modal.
-    pub(crate) fn pill_label(&self) -> &'static str {
+    pub(crate) fn pill_label(&self) -> String {
         match self {
-            SessionType::Terminal => "Terminal",
-            SessionType::Oz => "Built in agent",
-            SessionType::CliAgent(CLIAgent::Claude) => "Claude",
-            SessionType::CliAgent(CLIAgent::Codex) => "Codex",
-            SessionType::CliAgent(CLIAgent::Gemini) => "Gemini",
-            SessionType::CliAgent(agent) => agent.display_name(),
+            SessionType::Terminal => warp_i18n::tr("app-onboarding-tab-config-session-terminal"),
+            SessionType::Oz => warp_i18n::tr("app-onboarding-tab-config-session-built-in-agent"),
+            SessionType::CliAgent(CLIAgent::Claude) => "Claude".to_string(),
+            SessionType::CliAgent(CLIAgent::Codex) => "Codex".to_string(),
+            SessionType::CliAgent(CLIAgent::Gemini) => "Gemini".to_string(),
+            SessionType::CliAgent(agent) => agent.display_name().to_string(),
         }
     }
 }
@@ -88,12 +88,12 @@ fn config_name(directory: &Path, enable_worktree: bool) -> String {
         .and_then(|n| n.to_str())
         .or_else(|| directory.to_str())
         .unwrap_or("untitled");
-    let prefix = if enable_worktree {
-        "Worktree"
+    let key = if enable_worktree {
+        "app-tab-config-name-worktree"
     } else {
-        "New tab"
+        "app-tab-config-name-new-tab"
     };
-    format!("{prefix}: {repo}")
+    warp_i18n::tr_with_args(key, &[("repo", repo)])
 }
 
 /// Builds a `TabConfig` from the given session parameters.
@@ -131,7 +131,7 @@ pub fn build_tab_config(
             params.insert(
                 WORKTREE_BRANCH_PARAM.to_string(),
                 TabConfigParam {
-                    description: Some("New worktree branch name".to_string()),
+                    description: Some(warp_i18n::tr("app-tab-config-new-worktree-branch-name")),
                     default: Some(WORKTREE_BRANCH_DEFAULT.to_string()),
                     param_type: TabConfigParamType::Text,
                 },
@@ -217,7 +217,7 @@ pub fn tab_config_from_pane_snapshot(
     snapshot_to_flat_panes(snapshot, &mut panes, &mut counter);
 
     TabConfig {
-        name: "My Tab Config".to_string(),
+        name: warp_i18n::tr("app-tab-config-default-name"),
         title: custom_title,
         color,
         panes,

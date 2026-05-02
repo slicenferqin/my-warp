@@ -260,11 +260,15 @@ impl SearchItem for CodeSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!(
-            "Code symbol: {} in {}:{}",
-            self.code_symbol.symbol.name,
-            self.code_symbol.file_path.to_string_lossy(),
-            self.code_symbol.symbol.line_number
+        let path = self.code_symbol.file_path.to_string_lossy().to_string();
+        let line = self.code_symbol.symbol.line_number.to_string();
+        warp_i18n::tr_with_args(
+            "ai-context-menu-code-symbol-accessibility-label",
+            &[
+                ("symbol", &self.code_symbol.symbol.name),
+                ("path", &path),
+                ("line", &line),
+            ],
         )
     }
 }

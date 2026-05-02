@@ -178,9 +178,15 @@ impl SearchItem for WorkflowSearchItem {
 
     fn accessibility_label(&self) -> String {
         if let Some(description) = &self.workflow_description {
-            format!("Workflow: {} - {}", self.workflow_name, description)
+            warp_i18n::tr_with_args(
+                "ai-context-menu-workflow-accessibility-label-with-description",
+                &[("name", &self.workflow_name), ("description", description)],
+            )
         } else {
-            format!("Workflow: {}", self.workflow_name)
+            warp_i18n::tr_with_args(
+                "ai-context-menu-workflow-accessibility-label",
+                &[("name", &self.workflow_name)],
+            )
         }
     }
 

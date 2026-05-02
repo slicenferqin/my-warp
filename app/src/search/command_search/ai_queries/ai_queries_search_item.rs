@@ -157,9 +157,9 @@ impl SearchItem for AIQuerySearchResultItem {
         details_column.add_child(
             Container::new(
                 ui_builder
-                    .paragraph(format!(
-                        "Ran {}",
-                        format_approx_duration_from_now(self.start_time)
+                    .paragraph(warp_i18n::tr_with_args(
+                        "command-search-ai-query-ran",
+                        &[("time", &format_approx_duration_from_now(self.start_time))],
                     ))
                     .build()
                     .finish(),
@@ -184,6 +184,9 @@ impl SearchItem for AIQuerySearchResultItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("AI query: {}", self.query_text)
+        warp_i18n::tr_with_args(
+            "command-search-ai-query-accessibility-label",
+            &[("query", &self.query_text)],
+        )
     }
 }

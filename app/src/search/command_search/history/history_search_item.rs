@@ -159,7 +159,10 @@ impl SearchItem for HistorySearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("History item: {}", self.entry.command)
+        warp_i18n::tr_with_args(
+            "command-search-history-accessibility-label",
+            &[("command", &self.entry.command)],
+        )
     }
 }
 

@@ -148,6 +148,9 @@ impl SearchItem for WorkflowSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Workflow: {}", self.cloud_workflow.model().data.name())
+        warp_i18n::tr_with_args(
+            "command-palette-workflow-accessibility-label",
+            &[("name", self.cloud_workflow.model().data.name())],
+        )
     }
 }

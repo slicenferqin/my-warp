@@ -138,6 +138,9 @@ impl SearchItem for NotebookSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Notebook: {}", self.model.title)
+        warp_i18n::tr_with_args(
+            "command-search-notebook-accessibility-label",
+            &[("title", &self.model.title)],
+        )
     }
 }

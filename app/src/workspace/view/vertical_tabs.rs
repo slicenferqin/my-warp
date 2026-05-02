@@ -1386,12 +1386,15 @@ fn render_new_tab_button(
         let contents = if hover_state.is_hovered() {
             let tooltip = if let Some(sublabel) = tab_configs_keybinding.clone() {
                 ui_builder
-                    .tool_tip_with_sublabel("Tab configs".to_string(), sublabel)
+                    .tool_tip_with_sublabel(
+                        warp_i18n::tr("app-workspace-tab-configs-tooltip"),
+                        sublabel,
+                    )
                     .build()
                     .finish()
             } else {
                 ui_builder
-                    .tool_tip("Tab configs".to_string())
+                    .tool_tip(warp_i18n::tr("app-workspace-tab-configs-tooltip"))
                     .build()
                     .finish()
             };

@@ -798,6 +798,10 @@ impl<A: Action + Clone> MenuItemFields<A> {
         self.element.label().unwrap_or_default()
     }
 
+    pub fn has_submenu(&self) -> bool {
+        self.has_submenu
+    }
+
     pub fn is_disabled(&self) -> bool {
         self.disabled
     }

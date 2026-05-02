@@ -359,7 +359,11 @@ impl KeybindingsView {
                         .build()
                         .finish(),
                 )
-                .with_child(self.render_text("To toggle this panel".into(), None, appearance))
+                .with_child(self.render_text(
+                    warp_i18n::tr("resource-center-keybindings-toggle-panel"),
+                    None,
+                    appearance,
+                ))
                 .with_cross_axis_alignment(CrossAxisAlignment::Center)
                 .finish();
 
@@ -374,7 +378,7 @@ impl KeybindingsView {
             appearance
                 .ui_builder()
                 .link(
-                    "here.".into(),
+                    warp_i18n::tr("resource-center-keybindings-here-link"),
                     None,
                     Some(Box::new(|ctx| {
                         ctx.dispatch_typed_action(WorkspaceAction::ConfigureKeybindingSettings {
@@ -397,7 +401,7 @@ impl KeybindingsView {
         Container::new(
             column
                 .with_child(self.render_text(
-                    "Go to settings > keyboard shortcuts to configure custom keybindings".into(),
+                    warp_i18n::tr("resource-center-keybindings-configure-custom"),
                     None,
                     appearance,
                 ))
@@ -425,15 +429,25 @@ impl KeybindingsView {
             Flex::column().with_cross_axis_alignment(CrossAxisAlignment::Stretch);
 
         let title = match section {
-            KeybindingSection::Essentials => "Essentials",
-            KeybindingSection::Blocks => "Blocks",
-            KeybindingSection::InputEditor => "Input Editor",
-            KeybindingSection::Terminal => "Terminal",
-            KeybindingSection::Fundamentals => "Fundamentals",
+            KeybindingSection::Essentials => {
+                warp_i18n::tr("resource-center-keybindings-section-essentials")
+            }
+            KeybindingSection::Blocks => {
+                warp_i18n::tr("resource-center-keybindings-section-blocks")
+            }
+            KeybindingSection::InputEditor => {
+                warp_i18n::tr("resource-center-keybindings-section-input-editor")
+            }
+            KeybindingSection::Terminal => {
+                warp_i18n::tr("resource-center-keybindings-section-terminal")
+            }
+            KeybindingSection::Fundamentals => {
+                warp_i18n::tr("resource-center-keybindings-section-fundamentals")
+            }
         };
 
         let mut section_header = self.render_text(
-            title.into(),
+            title,
             Some(UiComponentStyles {
                 font_color: Some(appearance.theme().active_ui_text_color().into()),
                 font_size: Some(SECTION_HEADER_FONT_SIZE),

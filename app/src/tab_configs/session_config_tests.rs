@@ -49,7 +49,10 @@ fn terminal_no_worktree() {
         true,
     );
 
-    assert_eq!(config.name, "New tab: project");
+    assert_eq!(
+        config.name,
+        warp_i18n::tr_with_args("app-tab-config-name-new-tab", &[("repo", "project")])
+    );
     assert!(config.title.is_none());
     assert_eq!(config.panes.len(), 1);
     assert_eq!(
@@ -330,7 +333,10 @@ fn write_tab_config_content_is_valid_toml() {
     let contents = std::fs::read_to_string(&path).expect("Should read file");
     let parsed: TabConfig = toml::from_str(&contents).expect("Should parse as TabConfig");
 
-    assert_eq!(parsed.name, "Worktree: repo");
+    assert_eq!(
+        parsed.name,
+        warp_i18n::tr_with_args("app-tab-config-name-worktree", &[("repo", "repo")])
+    );
     assert_eq!(parsed.panes[0].commands.as_ref().unwrap().len(), 3);
     assert!(parsed.params.contains_key("worktree_branch_name"));
 }
@@ -417,7 +423,7 @@ fn snapshot_single_terminal_pane() {
     let snapshot = make_terminal_leaf(Some("/home/user/project"), true);
     let config = tab_config_from_pane_snapshot(&snapshot, None, None);
 
-    assert_eq!(config.name, "My Tab Config");
+    assert_eq!(config.name, warp_i18n::tr("app-tab-config-default-name"));
     assert!(config.title.is_none());
     assert!(config.color.is_none());
     assert_eq!(config.panes.len(), 1);

@@ -157,11 +157,12 @@ impl SearchItem for MatchedBinding {
             .binding
             .description
             .in_context(DescriptionContext::Default);
+        let label = localized_action_label(&self.binding.name, description);
+        let trigger = trigger.map(Keystroke::normalized).unwrap_or_default();
 
-        format!(
-            "Selected {}, {}.",
-            localized_action_label(&self.binding.name, description),
-            trigger.map(Keystroke::normalized).unwrap_or_default()
+        warp_i18n::tr_with_args(
+            "command-palette-action-accessibility-selected",
+            &[("label", &label), ("trigger", &trigger)],
         )
     }
 
@@ -169,12 +170,16 @@ impl SearchItem for MatchedBinding {
         self.binding
             .trigger
             .as_ref()
-            .map_or("Press enter to confirm.".into(), |trigger| {
-                format!(
-                    "Press enter to confirm. Use {} binding to run this action in the future.",
-                    trigger.normalized()
-                )
-            })
+            .map_or(
+                warp_i18n::tr("command-palette-action-accessibility-help-confirm"),
+                |trigger| {
+                    let binding = trigger.normalized();
+                    warp_i18n::tr_with_args(
+                        "command-palette-action-accessibility-help-confirm-with-binding",
+                        &[("binding", &binding)],
+                    )
+                },
+            )
             .into()
     }
 }

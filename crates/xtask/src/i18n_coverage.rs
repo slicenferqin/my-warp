@@ -26,6 +26,22 @@ enum I18nCoverageScopeArg {
     CodeReview,
     /// Scan first-pass AI entry, right panel, conversation list, and loading UI.
     AiEntry,
+    /// Scan first-run onboarding slides and the tab-config onboarding setup.
+    Onboarding,
+    /// Scan tab config and worktree setup UI.
+    TabConfigs,
+    /// Scan command palette search, filters, results, and zero state.
+    CommandPalette,
+    /// Scan command search, AI command search, and zero state UI.
+    CommandSearch,
+    /// Scan the welcome palette shown before the first terminal session.
+    WelcomePalette,
+    /// Scan AI context picker menus and their search results.
+    AiContextMenu,
+    /// Scan global file search and left panel toolbelt UI.
+    GlobalSearch,
+    /// Scan resource center, help, docs, and keybinding resource pages.
+    ResourceCenter,
     /// Scan all app/src Rust sources, excluding tests and integration helpers.
     App,
 }
@@ -51,6 +67,29 @@ impl I18nCoverageScopeArg {
                 "app/src/ai/agent_tips.rs",
                 "app/src/ai/loading",
             ],
+            Self::Onboarding => &[
+                "crates/onboarding/src/slides",
+                "crates/onboarding/src/model.rs",
+                "app/src/tab_configs/session_config_modal.rs",
+                "app/src/tab_configs/session_config_rendering.rs",
+                "app/src/workspace/hoa_onboarding/tab_config_step.rs",
+            ],
+            Self::TabConfigs => &["app/src/tab_configs"],
+            Self::CommandPalette => &[
+                "app/src/search/command_palette",
+                "app/src/search/action",
+                "app/src/search/search_bar.rs",
+                "app/src/search/data_source.rs",
+                "app/src/search/filter_chip_renderer.rs",
+            ],
+            Self::CommandSearch => &["app/src/search/command_search"],
+            Self::WelcomePalette => &["app/src/search/welcome_palette"],
+            Self::AiContextMenu => &["app/src/search/ai_context_menu"],
+            Self::GlobalSearch => &[
+                "app/src/workspace/view/global_search",
+                "app/src/workspace/view/left_panel.rs",
+            ],
+            Self::ResourceCenter => &["app/src/resource_center"],
             Self::App => &["app/src"],
         }
     }
@@ -61,6 +100,14 @@ impl I18nCoverageScopeArg {
             Self::AppShell => "app-shell",
             Self::CodeReview => "code-review",
             Self::AiEntry => "ai-entry",
+            Self::Onboarding => "onboarding",
+            Self::TabConfigs => "tab-configs",
+            Self::CommandPalette => "command-palette",
+            Self::CommandSearch => "command-search",
+            Self::WelcomePalette => "welcome-palette",
+            Self::AiContextMenu => "ai-context-menu",
+            Self::GlobalSearch => "global-search",
+            Self::ResourceCenter => "resource-center",
             Self::App => "app",
         }
     }
@@ -498,6 +545,7 @@ fn is_ignored_context(line: &str) -> bool {
         "#[deprecated",
         "#[error(",
         "#[serde",
+        "#[schemars",
         "option_env!(",
         "std::env::",
         "env::var",
@@ -530,6 +578,10 @@ fn is_ignored_literal(literal: &str) -> bool {
     if literal.contains("://")
         || literal.starts_with("mailto:")
         || literal.starts_with("bundled/")
+        || literal.starts_with("git worktree add")
+        || literal.starts_with("cd {worktree_path}")
+        || literal.starts_with("command_palette:")
+        || literal.contains("{id_str}")
         || literal.contains(".svg")
         || literal.contains(".png")
         || literal.contains(".toml")
@@ -552,6 +604,12 @@ fn is_ignored_literal(literal: &str) -> bool {
 
     if literal.starts_with("settings-")
         || literal.starts_with("command-palette-")
+        || literal.starts_with("command-search-")
+        || literal.starts_with("welcome-palette-")
+        || literal.starts_with("ai-context-menu-")
+        || literal.starts_with("welcome_palette:")
+        || literal.starts_with("ai_context_menu:")
+        || literal.starts_with("QueryResultRenderer:")
         || literal.starts_with("workspace:")
         || literal.starts_with("app:")
         || literal.starts_with("input:")
@@ -572,8 +630,17 @@ fn is_ignored_literal(literal: &str) -> bool {
         || literal.starts_with("Code Review Panel:")
         || literal.starts_with("Importing orphaned comment")
         || literal.starts_with("AI PR content generation ")
+        || literal.starts_with("GlobalSearch:")
         || literal.starts_with("This server is not an installation ")
         || literal.starts_with("Install server update is only supported ")
+    {
+        return true;
+    }
+
+    if literal.ends_with(':')
+        && literal
+            .chars()
+            .all(|ch| ch.is_ascii_lowercase() || ch == '_' || ch == ':')
     {
         return true;
     }
@@ -582,6 +649,9 @@ fn is_ignored_literal(literal: &str) -> bool {
         literal,
         "ESC"
             | "HEAD"
+            | "Claude"
+            | "Codex"
+            | "Gemini"
             | ".M"
             | "M."
             | "MM"
@@ -640,6 +710,15 @@ fn is_ignored_literal(literal: &str) -> bool {
             | "terminal is currently executing a command"
             | "terminal input box is not visible"
             | "No active code review view is associated with the current tab/repo selection"
+            | "panes array is empty"
+            | "duplicate pane IDs detected"
+            | "OpenProjectConvo action unexpectedly handled in command palette for project: {project_name}"
+            | "A welcome tip shown to new users."
+            | "Notebook in search results has neither a name nor command match result."
+            | "CommandSearchViewPanel"
+            | "AIContextMenuPanel"
+            | "Upgrade AI Usage"
+            | "{truncated}..."
     ) {
         return true;
     }
@@ -783,6 +862,14 @@ mod tests {
         assert!(!is_candidate_ui_string(
             r#"debug!("Refreshing GitHub auth URL")"#,
             "Refreshing GitHub auth URL"
+        ));
+        assert!(!is_candidate_ui_string(
+            r#"commands.push(format!("git worktree add -b {worktree_branch_name} {worktree_path}"))"#,
+            "git worktree add -b {worktree_branch_name} {worktree_path}"
+        ));
+        assert!(!is_candidate_ui_string(
+            r#"return Err("panes array is empty".to_string());"#,
+            "panes array is empty"
         ));
     }
 

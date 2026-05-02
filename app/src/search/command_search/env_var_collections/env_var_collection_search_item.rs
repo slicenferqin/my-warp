@@ -39,7 +39,7 @@ impl EnvVarCollectionSearchItem {
                 env_var_collection
                     .title
                     .clone()
-                    .unwrap_or("Untitled".to_owned()),
+                    .unwrap_or_else(|| warp_i18n::tr("command-search-untitled")),
                 true,
             )
             .with_style(UiComponentStyles {
@@ -97,7 +97,7 @@ impl SearchItem for EnvVarCollectionSearchItem {
             env_var_collection
                 .title
                 .clone()
-                .unwrap_or("Untitled".to_owned()),
+                .unwrap_or_else(|| warp_i18n::tr("command-search-untitled")),
             appearance.ui_font_family(),
             appearance.monospace_font_size(),
         )
@@ -219,13 +219,14 @@ impl SearchItem for EnvVarCollectionSearchItem {
 
     fn accessibility_label(&self) -> String {
         let env_var_collection = self.env_var_collection.model().string_model.clone();
+        let title = env_var_collection
+            .title
+            .clone()
+            .unwrap_or_else(|| warp_i18n::tr("command-search-untitled"));
 
-        format!(
-            "Environment Variables: {}",
-            env_var_collection
-                .title
-                .clone()
-                .unwrap_or("Untitled".to_owned())
+        warp_i18n::tr_with_args(
+            "command-search-env-vars-accessibility-label",
+            &[("title", &title)],
         )
     }
 }

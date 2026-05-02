@@ -112,6 +112,15 @@ impl ParamField {
     }
 }
 
+fn localized_param_label(name: &str) -> String {
+    match name {
+        "repo" => warp_i18n::tr("app-tab-config-param-repository"),
+        "branch" => warp_i18n::tr("app-tab-config-param-branch"),
+        "worktree_branch_name" => warp_i18n::tr("app-tab-config-param-worktree-branch-name"),
+        _ => name.to_string(),
+    }
+}
+
 /// Body view for the tab-config parameter fill modal.
 ///
 /// Renders one labeled input row per parameter defined in the tab config's `[params]` section.
@@ -155,12 +164,12 @@ pub enum TabConfigParamsModalAction {
 impl TabConfigParamsModal {
     pub fn new(ctx: &mut ViewContext<Self>) -> Self {
         let cancel_button = ctx.add_typed_action_view(|_| {
-            ActionButton::new("Cancel", NakedTheme).on_click(|ctx| {
+            ActionButton::new(warp_i18n::tr("common-cancel"), NakedTheme).on_click(|ctx| {
                 ctx.dispatch_typed_action(TabConfigParamsModalAction::Cancel);
             })
         });
         let submit_button = ctx.add_typed_action_view(|ctx| {
-            ActionButton::new("Open Tab", PrimaryTheme)
+            ActionButton::new(warp_i18n::tr("app-tab-config-open-tab"), PrimaryTheme)
                 .with_keybinding(
                     KeystrokeSource::Fixed(Keystroke::parse("enter").unwrap_or_default()),
                     ctx,
@@ -169,8 +178,9 @@ impl TabConfigParamsModal {
                     ctx.dispatch_typed_action(TabConfigParamsModalAction::Submit);
                 })
         });
-        let submit_button_disabled =
-            ctx.add_typed_action_view(|_| ActionButton::new("Open Tab", DisabledTheme));
+        let submit_button_disabled = ctx.add_typed_action_view(|_| {
+            ActionButton::new(warp_i18n::tr("app-tab-config-open-tab"), DisabledTheme)
+        });
         Self {
             param_fields: Vec::new(),
             pending_config: None,
@@ -288,7 +298,8 @@ impl TabConfigParamsModal {
                 TabConfigParamType::Text => {
                     let default_text = param.default.clone().unwrap_or_default();
                     let placeholder = if default_text.is_empty() {
-                        format!("Enter {name}")
+                        let label = localized_param_label(name);
+                        warp_i18n::tr_with_args("app-tab-config-enter-param", &[("name", &label)])
                     } else {
                         default_text.clone()
                     };
@@ -594,9 +605,10 @@ impl View for TabConfigParamsModal {
         let active_text = theme.active_ui_text_color();
 
         for (i, (name, param, field)) in self.param_fields.iter().enumerate() {
+            let label_text = localized_param_label(name);
             let mut label = Container::new(
                 Text::new_inline(
-                    name.clone(),
+                    label_text,
                     appearance.ui_font_family(),
                     appearance.ui_font_size(),
                 )
@@ -632,7 +644,10 @@ impl View for TabConfigParamsModal {
                     form.add_child(
                         Container::new(
                             Text::new_inline(
-                                format!("Default: {default_value}"),
+                                warp_i18n::tr_with_args(
+                                    "app-tab-config-default-value",
+                                    &[("value", default_value)],
+                                ),
                                 appearance.ui_font_family(),
                                 appearance.ui_font_size() - 1.,
                             )

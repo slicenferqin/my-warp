@@ -119,29 +119,33 @@ pub enum AIContextMenuCategory {
 }
 
 impl AIContextMenuCategory {
-    pub fn name(&self) -> &'static str {
+    pub fn display_name_key(&self) -> &'static str {
         match self {
-            AIContextMenuCategory::CurrentFolderFiles => "Files and folders",
-            AIContextMenuCategory::RepoFiles => "Files and folders",
-            AIContextMenuCategory::Commands => "Commands",
-            AIContextMenuCategory::Blocks => "Blocks",
-            AIContextMenuCategory::Workflows => "Workflows",
-            AIContextMenuCategory::Notebooks => "Notebooks",
-            AIContextMenuCategory::Plans => "Plans",
-            AIContextMenuCategory::Diffs => "Diffs",
-            AIContextMenuCategory::Docs => "Docs",
-            AIContextMenuCategory::Tasks => "Past tasks",
-            AIContextMenuCategory::Rules => "Rules",
-            AIContextMenuCategory::Servers => "Servers and integrations",
-            AIContextMenuCategory::Terminal => "Terminal",
-            AIContextMenuCategory::Web => "Web",
-            AIContextMenuCategory::RecentDiff => "Most recent diff",
-            AIContextMenuCategory::RecentBlock => "Most recent block",
-            AIContextMenuCategory::Code => "Code",
-            AIContextMenuCategory::DiffSet => "Diff sets",
-            AIContextMenuCategory::Conversations => "Conversations",
-            AIContextMenuCategory::Skills => "Skills",
+            AIContextMenuCategory::CurrentFolderFiles => "ai-context-menu-category-files-folders",
+            AIContextMenuCategory::RepoFiles => "ai-context-menu-category-files-folders",
+            AIContextMenuCategory::Commands => "ai-context-menu-category-commands",
+            AIContextMenuCategory::Blocks => "ai-context-menu-category-blocks",
+            AIContextMenuCategory::Workflows => "ai-context-menu-category-workflows",
+            AIContextMenuCategory::Notebooks => "ai-context-menu-category-notebooks",
+            AIContextMenuCategory::Plans => "ai-context-menu-category-plans",
+            AIContextMenuCategory::Diffs => "ai-context-menu-category-diffs",
+            AIContextMenuCategory::Docs => "ai-context-menu-category-docs",
+            AIContextMenuCategory::Tasks => "ai-context-menu-category-past-tasks",
+            AIContextMenuCategory::Rules => "ai-context-menu-category-rules",
+            AIContextMenuCategory::Servers => "ai-context-menu-category-servers",
+            AIContextMenuCategory::Terminal => "ai-context-menu-category-terminal",
+            AIContextMenuCategory::Web => "ai-context-menu-category-web",
+            AIContextMenuCategory::RecentDiff => "ai-context-menu-category-recent-diff",
+            AIContextMenuCategory::RecentBlock => "ai-context-menu-category-recent-block",
+            AIContextMenuCategory::Code => "ai-context-menu-category-code",
+            AIContextMenuCategory::DiffSet => "ai-context-menu-category-diff-sets",
+            AIContextMenuCategory::Conversations => "ai-context-menu-category-conversations",
+            AIContextMenuCategory::Skills => "ai-context-menu-category-skills",
         }
+    }
+
+    pub fn display_name(&self) -> String {
+        warp_i18n::tr(self.display_name_key())
     }
 
     pub fn icon(&self) -> &'static str {
@@ -1239,7 +1243,7 @@ impl AIContextMenu {
             categories
                 .into_iter()
                 .filter(|category| {
-                    let category_name_lower = category.name().to_lowercase();
+                    let category_name_lower = category.display_name().to_lowercase();
                     category_name_lower.contains(&query_lower)
                 })
                 .collect()
@@ -1305,7 +1309,7 @@ impl AIContextMenu {
 
             let text = Container::new(
                 Text::new(
-                    category.name(),
+                    category.display_name(),
                     appearance.ui_font_family(),
                     appearance.monospace_font_size() - 1.0,
                 )
@@ -1389,7 +1393,7 @@ impl AIContextMenu {
         let theme = appearance.theme();
         Container::new(
             Text::new(
-                "No results found",
+                warp_i18n::tr("ai-context-menu-no-results"),
                 appearance.ui_font_family(),
                 appearance.monospace_font_size(),
             )
@@ -1405,7 +1409,7 @@ impl AIContextMenu {
         let theme = appearance.theme();
         Container::new(
             Text::new(
-                "Loading results...",
+                warp_i18n::tr("ai-context-menu-loading-results"),
                 appearance.ui_font_family(),
                 appearance.monospace_font_size(),
             )
@@ -1422,7 +1426,7 @@ impl AIContextMenu {
         let theme = appearance.theme();
         Container::new(
             Text::new(
-                "Code symbols indexing...",
+                warp_i18n::tr("ai-context-menu-code-symbols-indexing"),
                 appearance.ui_font_family(),
                 appearance.monospace_font_size(),
             )
@@ -1573,7 +1577,7 @@ impl AIContextMenu {
 
         let title = Container::new(
             Text::new(
-                category.name(),
+                category.display_name(),
                 appearance.ui_font_family(),
                 appearance.monospace_font_size() - 2.0,
             )

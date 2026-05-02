@@ -169,10 +169,10 @@ impl SearchItem for RuleSearchItem {
             if !name.is_empty() {
                 name.clone()
             } else {
-                "Rule".to_string()
+                warp_i18n::tr("ai-context-menu-rule")
             }
         } else {
-            "Rule".to_string()
+            warp_i18n::tr("ai-context-menu-rule")
         };
 
         // Create title element
@@ -225,6 +225,9 @@ impl SearchItem for RuleSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Rule: {}", self.rule_content)
+        warp_i18n::tr_with_args(
+            "ai-context-menu-rule-accessibility-label",
+            &[("content", &self.rule_content)],
+        )
     }
 }

@@ -25,12 +25,12 @@ enum ConversationSection {
 }
 
 impl ConversationSection {
-    fn title(&self) -> &'static str {
-        match self {
-            ConversationSection::ActivePane => "Active pane conversations",
-            ConversationSection::OtherActive => "Other active conversations",
-            ConversationSection::Past => "Past conversations",
-        }
+    fn title(&self) -> String {
+        warp_i18n::tr(match self {
+            ConversationSection::ActivePane => "command-palette-conversation-section-active-pane",
+            ConversationSection::OtherActive => "command-palette-conversation-section-other-active",
+            ConversationSection::Past => "command-palette-conversation-section-past",
+        })
     }
 
     /// Returns the ordering of the sections for display in the command palette
@@ -190,7 +190,7 @@ impl SyncDataSource for DataSource {
                                 .into(),
                             );
                         }
-                        results.push(SeparatorSearchItem::new(section.title().to_string()).into());
+                        results.push(SeparatorSearchItem::new(section.title()).into());
                     }
                 }
             }

@@ -651,7 +651,7 @@ impl GlobalSearchView {
             };
 
             let mut editor = EditorView::new(options, ctx);
-            editor.set_placeholder_text("Search in files", ctx);
+            editor.set_placeholder_text(warp_i18n::tr("global-search-placeholder"), ctx);
             editor
         });
 
@@ -665,7 +665,7 @@ impl GlobalSearchView {
         let case_sensitivity_button = ctx.add_typed_action_view(|_ctx| {
             ActionButton::new_with_boxed_theme(String::new(), Arc::new(NakedTheme))
                 .with_icon(UiIcon::CaseSensitivity)
-                .with_tooltip("Toggle Case Sensitivity")
+                .with_tooltip(warp_i18n::tr("global-search-toggle-case-sensitivity"))
                 .with_size(ButtonSize::Small)
                 .on_click(|ctx| {
                     ctx.dispatch_typed_action(GlobalSearchAction::ToggleCaseSensitivity);
@@ -675,7 +675,7 @@ impl GlobalSearchView {
         let regex_button = ctx.add_typed_action_view(|_ctx| {
             ActionButton::new_with_boxed_theme(String::new(), Arc::new(NakedTheme))
                 .with_icon(UiIcon::Regex)
-                .with_tooltip("Toggle Regex")
+                .with_tooltip(warp_i18n::tr("global-search-toggle-regex"))
                 .with_size(ButtonSize::Small)
                 .on_click(|ctx| {
                     ctx.dispatch_typed_action(GlobalSearchAction::ToggleRegexSearch);
@@ -2011,9 +2011,13 @@ impl View for GlobalSearchView {
         let appearance = Appearance::as_ref(app);
         let theme = appearance.theme();
 
-        let search_label = Text::new_inline("Search", appearance.ui_font_family(), 14.)
-            .with_color(blended_colors::text_sub(theme, theme.background()))
-            .finish();
+        let search_label = Text::new_inline(
+            warp_i18n::tr("global-search-label"),
+            appearance.ui_font_family(),
+            14.,
+        )
+        .with_color(blended_colors::text_sub(theme, theme.background()))
+        .finish();
 
         let editor_line_height = self
             .query_editor
@@ -2064,17 +2068,33 @@ impl View for GlobalSearchView {
             .with_child(search_label)
             .with_child(query_row);
 
-        let files = self.unique_match_count();
-        let file_word = if files == 1 { "file" } else { "files" };
-
         let message = if self.is_search_in_progress && self.total_match_count == 0 {
             "".to_string()
         } else if !self.is_search_in_progress && self.total_match_count == 0 {
-            "No results found. Review your gitignore files.".to_string()
+            warp_i18n::tr("global-search-no-results-review-gitignore")
         } else {
-            match self.total_match_count {
-                1 => format!("1 result in {files} {file_word}"),
-                n => format!("{n} results in {files} {file_word}"),
+            let files = self.unique_match_count();
+            let files_arg = files.to_string();
+            match (self.total_match_count, files) {
+                (1, 1) => warp_i18n::tr("global-search-one-result-one-file"),
+                (1, _) => warp_i18n::tr_with_args(
+                    "global-search-one-result-many-files",
+                    &[("files", &files_arg)],
+                ),
+                (results, 1) => {
+                    let results_arg = results.to_string();
+                    warp_i18n::tr_with_args(
+                        "global-search-many-results-one-file",
+                        &[("results", &results_arg)],
+                    )
+                }
+                (results, _) => {
+                    let results_arg = results.to_string();
+                    warp_i18n::tr_with_args(
+                        "global-search-many-results-many-files",
+                        &[("results", &results_arg), ("files", &files_arg)],
+                    )
+                }
             }
         };
 
@@ -2096,7 +2116,7 @@ impl View for GlobalSearchView {
             font_color: Some(blended_colors::text_sub(theme, theme.background())),
             ..Default::default()
         };
-        let capped_message = "The result set only contains a subset of all matches. Be more specific in your search to narrow down results.".to_string();
+        let capped_message = warp_i18n::tr("global-search-capped-results");
         let capped_text = Span::new(capped_message, capped_text_styles)
             .with_soft_wrap()
             .build()
@@ -2247,8 +2267,8 @@ impl GlobalSearchView {
     fn render_pre_search_state(&self, app: &AppContext) -> Box<dyn Element> {
         self.render_zero_state(
             Icon::Search,
-            "Global search",
-            "Search in files across your current directories.",
+            warp_i18n::tr("global-search-title"),
+            warp_i18n::tr("global-search-empty-description"),
             app,
         )
     }
@@ -2256,8 +2276,8 @@ impl GlobalSearchView {
     fn render_unavailable_state(&self, app: &AppContext) -> Box<dyn Element> {
         self.render_zero_state(
             Icon::AlertTriangle,
-            "Global search unavailable",
-            "Global search requires access to your local workspace. Open a new session or navigate to an active session to view.",
+            warp_i18n::tr("global-search-unavailable-title"),
+            warp_i18n::tr("global-search-unavailable-local-workspace"),
             app,
         )
     }
@@ -2265,8 +2285,8 @@ impl GlobalSearchView {
     fn render_remote_state(&self, app: &AppContext) -> Box<dyn Element> {
         self.render_zero_state(
             Icon::AlertTriangle,
-            "Global search unavailable",
-            "Global search requires access to your local workspace, which isn't supported in remote sessions",
+            warp_i18n::tr("global-search-unavailable-title"),
+            warp_i18n::tr("global-search-unavailable-remote-session"),
             app,
         )
     }
@@ -2274,8 +2294,8 @@ impl GlobalSearchView {
     fn render_unsupported_session_state(&self, app: &AppContext) -> Box<dyn Element> {
         self.render_zero_state(
             Icon::AlertTriangle,
-            "Global search unavailable",
-            "Global search doesn't currently work in Git Bash or WSL.",
+            warp_i18n::tr("global-search-unavailable-title"),
+            warp_i18n::tr("global-search-unavailable-unsupported-session"),
             app,
         )
     }

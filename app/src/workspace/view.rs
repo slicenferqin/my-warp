@@ -176,7 +176,7 @@ use crate::server::server_api::ai::AIClient;
 use crate::server::server_api::auth::AuthClient;
 use crate::settings::{
     AISettings, AISettingsChangedEvent, CodeSettings, CodeSettingsChangedEvent, CtrlTabBehavior,
-    DefaultSessionMode, InputModeSettings,
+    DefaultSessionMode, InputModeSettings, LanguageSettings, LanguageSettingsChangedEvent,
 };
 use crate::settings_view::environments_page::EnvironmentsPage;
 use crate::settings_view::pane_manager::SettingsPaneManager;
@@ -593,7 +593,8 @@ const NEW_SESSION_SIDECAR_SEARCH_BOX_HORIZONTAL_PADDING: f32 = 12.;
 const NEW_SESSION_SIDECAR_SEARCH_BOX_VERTICAL_PADDING: f32 = 6.;
 const NEW_SESSION_SIDECAR_FOOTER_HORIZONTAL_PADDING: f32 = 16.;
 const NEW_SESSION_SIDECAR_FOOTER_VERTICAL_PADDING: f32 = 8.;
-const SESSION_CONFIG_TAB_CONFIG_CHIP_TEXT: &str = "Access your tab configs here.";
+const SESSION_CONFIG_TAB_CONFIG_CHIP_TEXT_KEY: &str =
+    "app-workspace-session-config-tab-config-chip";
 const SESSION_CONFIG_TAB_CONFIG_CHIP_WIDTH: f32 = 206.;
 const SHOW_SETTINGS_KEYBINDING_NAME: &str = "workspace:show_settings";
 pub const TOGGLE_COMMAND_PALETTE_KEYBINDING_NAME: &str = "workspace:toggle_command_palette";
@@ -1098,6 +1099,17 @@ impl Workspace {
         });
     }
 
+    fn refresh_localized_workspace_text(&mut self, ctx: &mut ViewContext<Self>) {
+        self.vertical_tabs_search_input.update(ctx, |editor, ctx| {
+            editor.set_placeholder_text(warp_i18n::tr("app-workspace-search-tabs"), ctx);
+        });
+        self.worktree_sidecar_search_editor
+            .update(ctx, |editor, ctx| {
+                editor.set_placeholder_text(warp_i18n::tr("app-tab-config-search-repos"), ctx);
+            });
+        ctx.notify();
+    }
+
     fn close_new_session_dropdown_menu(&mut self, ctx: &mut ViewContext<Self>) {
         self.show_new_session_dropdown_menu = None;
         self.tab_config_action_sidecar_item = None;
@@ -1198,7 +1210,7 @@ impl Workspace {
                 },
                 ctx,
             );
-            editor.set_placeholder_text("Search repos", ctx);
+            editor.set_placeholder_text(warp_i18n::tr("app-tab-config-search-repos"), ctx);
             editor
         });
         ctx.subscribe_to_view(&editor, |me, editor_view, event, ctx| match event {
@@ -1234,7 +1246,7 @@ impl Workspace {
             EditorView::single_line(options, ctx)
         });
         editor.update(ctx, |editor, ctx| {
-            editor.set_placeholder_text("Search tabs...", ctx);
+            editor.set_placeholder_text(warp_i18n::tr("app-workspace-search-tabs"), ctx);
         });
         ctx.subscribe_to_view(&editor, |me, editor_view, event, ctx| match event {
             EditorEvent::Edited(_) => {
@@ -2325,7 +2337,7 @@ impl Workspace {
         .finish();
 
         let text = Text::new_inline(
-            SESSION_CONFIG_TAB_CONFIG_CHIP_TEXT.to_string(),
+            warp_i18n::tr(SESSION_CONFIG_TAB_CONFIG_CHIP_TEXT_KEY),
             appearance.ui_font_family(),
             12.,
         )
@@ -2883,6 +2895,15 @@ impl Workspace {
             me.handle_tab_settings_change(event, ctx)
         });
 
+        ctx.subscribe_to_model(&LanguageSettings::handle(ctx), |me, _, event, ctx| {
+            if matches!(
+                event,
+                LanguageSettingsChangedEvent::LanguagePreferenceSetting { .. }
+            ) {
+                me.refresh_localized_workspace_text(ctx);
+            }
+        });
+
         ctx.subscribe_to_model(&CodeSettings::handle(ctx), |me, _, event, ctx| {
             if matches!(
                 event,
@@ -3194,6 +3215,7 @@ impl Workspace {
         ws.sync_panel_positions_from_config(ctx);
         ws.sync_window_button_visibility(ctx);
         ws.update_titlebar_height(ctx);
+        ws.refresh_localized_workspace_text(ctx);
         // Seed the settings pane with the initial settings-file error (if
         // any) read from `GlobalResourceHandles`. Subsequent updates are
         // pushed by `subscribe_to_settings_errors` and `dismiss_workspace_banner`.
@@ -6063,11 +6085,12 @@ impl Workspace {
             #[cfg(target_os = "windows")]
             {
                 let is_terminal_default = effective_default == DefaultSessionMode::Terminal;
-                let mut terminal_item = MenuItemFields::new("Terminal")
-                    .with_on_select_action(WorkspaceAction::AddTerminalTab {
-                        hide_homepage: false,
-                    })
-                    .with_icon(icons::Icon::LayoutAlt01);
+                let mut terminal_item =
+                    MenuItemFields::new(warp_i18n::tr("app-workspace-new-session-terminal"))
+                        .with_on_select_action(WorkspaceAction::AddTerminalTab {
+                            hide_homepage: false,
+                        })
+                        .with_icon(icons::Icon::LayoutAlt01);
                 if is_terminal_default {
                     terminal_item = terminal_item.with_key_shortcut_label(shortcut_label.clone());
                 }
@@ -6100,11 +6123,12 @@ impl Workspace {
             // On other platforms, Terminal is a regular item.
             #[cfg(not(target_os = "windows"))]
             {
-                let mut terminal_item = MenuItemFields::new("Terminal")
-                    .with_on_select_action(WorkspaceAction::AddTerminalTab {
-                        hide_homepage: false,
-                    })
-                    .with_icon(icons::Icon::LayoutAlt01);
+                let mut terminal_item =
+                    MenuItemFields::new(warp_i18n::tr("app-workspace-new-session-terminal"))
+                        .with_on_select_action(WorkspaceAction::AddTerminalTab {
+                            hide_homepage: false,
+                        })
+                        .with_icon(icons::Icon::LayoutAlt01);
                 if effective_default == DefaultSessionMode::Terminal {
                     terminal_item = terminal_item.with_key_shortcut_label(shortcut_label.clone());
                 }
@@ -6188,14 +6212,14 @@ impl Workspace {
         if FeatureFlag::TabConfigs.is_enabled() {
             menu_items.push(MenuItem::Separator);
             menu_items.push(
-                MenuItemFields::new_submenu("New worktree config")
+                MenuItemFields::new_submenu(warp_i18n::tr("app-workspace-new-worktree-config"))
                     .with_icon(icons::Icon::Dataflow02)
                     .into_item(),
             );
 
             // 6. New tab config — V0: opens the TOML template.
             menu_items.push(
-                MenuItemFields::new("New tab config")
+                MenuItemFields::new(warp_i18n::tr("app-workspace-new-tab-config"))
                     .with_on_select_action(WorkspaceAction::SelectNewSessionMenuItem(
                         NewSessionMenuItem::CreateNewTabConfig,
                     ))
@@ -6206,7 +6230,7 @@ impl Workspace {
 
         menu_items.push(MenuItem::Separator);
         menu_items.push(
-            MenuItemFields::new("Reopen closed session")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-reopen-closed-session"))
                 .with_on_select_action(WorkspaceAction::ReopenClosedSession)
                 .with_key_shortcut_label(reopen_closed_session_shortcut_label)
                 .with_disabled(UndoCloseStack::handle(ctx).as_ref(ctx).is_empty())
@@ -6389,7 +6413,8 @@ impl Workspace {
                 .and_then(|view| view.as_ref(ctx).pwd())
                 .map(PathBuf::from);
 
-            let modal_title = format!("Open: {}", tab_config.name);
+            let modal_title =
+                warp_i18n::tr_with_args("app-tab-config-open-title", &[("name", &tab_config.name)]);
             self.tab_config_params_modal.view.update(ctx, |modal, ctx| {
                 modal.body().update(ctx, |body, ctx| {
                     body.set_title(modal_title);
@@ -8332,33 +8357,33 @@ impl Workspace {
         }
 
         items.extend([
-            MenuItemFields::new("What's new")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-whats-new"))
                 .with_on_select_action(WorkspaceAction::ViewLatestChangelog)
                 .into_item(),
-            MenuItemFields::new("Settings")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-settings"))
                 .with_on_select_action(WorkspaceAction::ShowSettings)
                 .into_item(),
-            MenuItemFields::new("Keyboard shortcuts")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-keyboard-shortcuts"))
                 .with_on_select_action(WorkspaceAction::ToggleKeybindingsPage)
                 .into_item(),
             MenuItem::Separator,
-            MenuItemFields::new("Documentation")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-documentation"))
                 .with_on_select_action(WorkspaceAction::ViewUserDocs)
                 .into_item(),
-            MenuItemFields::new("Feedback")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-feedback"))
                 .with_on_select_action(WorkspaceAction::SendFeedback)
                 .into_item(),
         ]);
 
         #[cfg(not(target_family = "wasm"))]
         items.push(
-            MenuItemFields::new("View Warp logs")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-view-warp-logs"))
                 .with_on_select_action(WorkspaceAction::ViewLogs)
                 .into_item(),
         );
 
         items.extend([
-            MenuItemFields::new("Slack")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-slack"))
                 .with_on_select_action(WorkspaceAction::JoinSlack)
                 .into_item(),
             MenuItem::Separator,
@@ -8366,7 +8391,7 @@ impl Workspace {
 
         if self.auth_state.is_anonymous_or_logged_out() {
             items.push(
-                MenuItemFields::new("Sign up")
+                MenuItemFields::new(warp_i18n::tr("app-workspace-sign-up"))
                     .with_on_select_action(WorkspaceAction::SignupAnonymousUser)
                     .into_item(),
             );
@@ -8380,7 +8405,7 @@ impl Workspace {
 
         if is_on_paid_plan {
             items.push(
-                MenuItemFields::new("Billing and usage")
+                MenuItemFields::new(warp_i18n::tr("app-workspace-billing-and-usage"))
                     .with_on_select_action(WorkspaceAction::ShowSettingsPage(
                         SettingsSection::BillingAndUsage,
                     ))
@@ -8388,21 +8413,21 @@ impl Workspace {
             );
         } else {
             items.push(
-                MenuItemFields::new("Upgrade")
+                MenuItemFields::new(warp_i18n::tr("app-workspace-upgrade"))
                     .with_on_select_action(WorkspaceAction::ShowUpgrade)
                     .into_item(),
             );
         }
 
         items.push(
-            MenuItemFields::new("Invite a friend")
+            MenuItemFields::new(warp_i18n::tr("app-workspace-invite-a-friend"))
                 .with_on_select_action(WorkspaceAction::ShowReferralSettingsPage)
                 .into_item(),
         );
 
         if !self.auth_state.is_anonymous_or_logged_out() {
             items.push(
-                MenuItemFields::new("Log out")
+                MenuItemFields::new(warp_i18n::tr("app-workspace-log-out"))
                     .with_on_select_action(WorkspaceAction::LogOut)
                     .into_item(),
             );
@@ -8605,7 +8630,7 @@ impl Workspace {
                 .with_height(NEW_SESSION_SIDECAR_SEARCH_BOX_HEIGHT)
                 .finish()
             }),
-            Some("Search repos".to_string()),
+            Some(warp_i18n::tr("app-tab-config-search-repos")),
         )
         .with_no_interaction_on_hover()
         .no_highlight_on_hover()
@@ -8680,9 +8705,13 @@ impl Workspace {
                                 .with_main_axis_size(MainAxisSize::Max)
                                 .with_cross_axis_alignment(CrossAxisAlignment::Center)
                                 .with_child(
-                                    Text::new_inline(" + Add new repo", font_family, font_size)
-                                        .with_color(text_color.into())
-                                        .finish(),
+                                    Text::new_inline(
+                                        warp_i18n::tr("app-tab-config-add-new-repo"),
+                                        font_family,
+                                        font_size,
+                                    )
+                                    .with_color(text_color.into())
+                                    .finish(),
                                 )
                                 .finish(),
                         )
@@ -8855,16 +8884,20 @@ impl Workspace {
             return;
         };
 
-        // Check what the hovered item is by reading its label.
-        let hovered_label = self.new_session_dropdown_menu.read(ctx, |menu, _| {
+        // Check what the hovered item is without making behavior depend on localized labels.
+        let hovered_item = self.new_session_dropdown_menu.read(ctx, |menu, _| {
             menu.items().get(hovered_index).and_then(|item| match item {
-                MenuItem::Item(fields) => Some(fields.label().to_string()),
+                MenuItem::Item(fields) => Some((
+                    fields.label().to_string(),
+                    fields.on_select_action().cloned(),
+                    fields.has_submenu(),
+                )),
                 _ => None,
             })
         });
 
         // Separator or non-labeled item — hide sidecar.
-        let Some(label) = hovered_label else {
+        let Some((label, action, has_submenu)) = hovered_item else {
             if self.show_new_session_sidecar {
                 self.show_new_session_sidecar = false;
                 self.new_session_dropdown_menu.update(ctx, |menu, _| {
@@ -8876,8 +8909,8 @@ impl Workspace {
             return;
         };
 
-        match label.as_str() {
-            "New worktree config" => {
+        match action {
+            _ if has_submenu => {
                 self.tab_config_action_sidecar_item = None;
                 let auto_select_first_repo = self.new_session_dropdown_menu.read(ctx, |menu, _| {
                     menu.last_selection_source() != Some(MenuSelectionSource::Pointer)
@@ -8889,7 +8922,9 @@ impl Workspace {
                 );
             }
             // Items that don't get any sidecar.
-            "New tab config" => {
+            Some(WorkspaceAction::SelectNewSessionMenuItem(
+                NewSessionMenuItem::CreateNewTabConfig,
+            )) => {
                 self.tab_config_action_sidecar_item = None;
                 if self.show_new_session_sidecar {
                     self.show_new_session_sidecar = false;
@@ -9321,7 +9356,10 @@ impl Workspace {
             .file_name()
             .map(|name| name.to_string_lossy().to_string())
             .unwrap_or_else(|| repo_path.clone());
-        let config_name = format!("Worktree: {repo_display_name}");
+        let config_name = warp_i18n::tr_with_args(
+            "app-tab-config-name-worktree",
+            &[("repo", &repo_display_name)],
+        );
         // Use the user's default session mode to decide pane type.
         let pane_type = if AISettings::as_ref(ctx).is_any_ai_enabled(ctx)
             && AISettings::as_ref(ctx).default_session_mode(ctx) == DefaultSessionMode::Agent
@@ -16618,26 +16656,20 @@ impl Workspace {
             if vertical_tabs_active {
                 (
                     self.vertical_tabs_panel_open,
-                    "Tabs panel",
+                    warp_i18n::tr("app-left-panel-tabs-panel"),
                     WorkspaceAction::ToggleVerticalTabsPanel,
                     "workspace:toggle_vertical_tabs_panel",
                     "workspace:toggle_vertical_tabs_panel",
                 )
             } else {
                 let tooltip = if self.left_panel_views.len() <= 1 {
-                    match self
-                        .left_panel_views
+                    self.left_panel_views
                         .first()
                         .copied()
                         .unwrap_or(ToolPanelView::WarpDrive)
-                    {
-                        ToolPanelView::ProjectExplorer => "Project explorer",
-                        ToolPanelView::GlobalSearch { .. } => "Global search",
-                        ToolPanelView::WarpDrive => "Warp Drive",
-                        ToolPanelView::ConversationListView => "Agent conversations",
-                    }
+                        .tooltip_text()
                 } else {
-                    "Tools panel"
+                    warp_i18n::tr("app-left-panel-tools-panel")
                 };
                 (
                     self.active_tab_pane_group().as_ref(ctx).left_panel_open,
@@ -16679,19 +16711,13 @@ impl Workspace {
         let is_active = self.active_tab_pane_group().as_ref(ctx).left_panel_open;
 
         let tooltip_text = if self.left_panel_views.len() <= 1 {
-            match self
-                .left_panel_views
+            self.left_panel_views
                 .first()
                 .copied()
                 .unwrap_or(ToolPanelView::WarpDrive)
-            {
-                ToolPanelView::ProjectExplorer => "Project explorer",
-                ToolPanelView::GlobalSearch { .. } => "Global search",
-                ToolPanelView::WarpDrive => "Warp Drive",
-                ToolPanelView::ConversationListView => "Agent conversations",
-            }
+                .tooltip_text()
         } else {
-            "Tools panel"
+            warp_i18n::tr("app-left-panel-tools-panel")
         };
 
         SavePosition::new(
@@ -16702,7 +16728,7 @@ impl Workspace {
                         icons::Icon::Tool2,
                         &self.mouse_states.tools_panel_icon,
                         WorkspaceAction::ToggleLeftPanel,
-                        tooltip_text.to_string(),
+                        tooltip_text,
                         keybinding_name_to_display_string("workspace:toggle_left_panel", ctx),
                         is_active,
                         false,
@@ -16941,7 +16967,7 @@ impl Workspace {
                         Shrinkable::new(
                             1.,
                             Text::new_inline(
-                                "Search sessions, agents, files...",
+                                warp_i18n::tr("app-workspace-global-search-placeholder"),
                                 appearance.ui_font_family(),
                                 14.,
                             )
@@ -17621,10 +17647,10 @@ impl Workspace {
         const BUTTON_WIDTH: f32 = 24. + SIDE_MENU_WIDTH;
         const BUTTON_LEFT_MARGIN: f32 = 4.;
 
-        let new_tab_tool_tip_label_text = "New Tab".to_string();
+        let new_tab_tool_tip_label_text = warp_i18n::tr("app-workspace-new-tab-tooltip");
         let new_tab_tool_tip_sublabel_text =
             keybinding_name_to_display_string(NEW_TAB_BINDING_NAME, ctx);
-        let tab_configs_tool_tip_label_text = "Tab configs".to_string();
+        let tab_configs_tool_tip_label_text = warp_i18n::tr("app-workspace-tab-configs-tooltip");
         let tab_configs_tool_tip_sublabel_text =
             keybinding_name_to_display_string(TOGGLE_TAB_CONFIGS_MENU_BINDING_NAME, ctx);
         let appearance = Appearance::as_ref(ctx);
@@ -17907,7 +17933,7 @@ impl Workspace {
                 icons::Icon::Gear,
                 &self.mouse_states.settings_icon,
                 WorkspaceAction::ShowSettings,
-                "Settings".to_string(),
+                warp_i18n::tr("app-workspace-settings"),
                 self.cached_keybindings[SHOW_SETTINGS_KEYBINDING_NAME].clone(),
                 false,
                 false,
@@ -17948,7 +17974,7 @@ impl Workspace {
                 Some(hovered_styles),
                 None,
             )
-            .with_centered_text_label(String::from("Sign up"));
+            .with_centered_text_label(warp_i18n::tr("app-workspace-sign-up"));
 
         Align::new(
             button
@@ -17990,7 +18016,7 @@ impl Workspace {
                 Some(hovered_styles),
                 None,
             )
-            .with_centered_text_label(String::from("Sign up"));
+            .with_centered_text_label(warp_i18n::tr("app-workspace-sign-up"));
 
         Align::new(
             button

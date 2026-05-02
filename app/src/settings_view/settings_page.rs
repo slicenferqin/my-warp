@@ -1007,8 +1007,7 @@ pub(crate) fn render_settings_info_banner(
     .finish()
 }
 
-const WORKSPACE_OVERRIDE_TOOLTIP_TEXT: &str =
-    "This option is enforced by your organization's settings and cannot be customized.";
+const WORKSPACE_OVERRIDE_TOOLTIP_TEXT_KEY: &str = "settings-workspace-override-tooltip";
 
 pub struct InputListItem<SettingsPageAction: Action + Clone> {
     pub item: String,
@@ -1117,7 +1116,7 @@ fn render_workspace_override_row_tooltip(
         if state.is_hovered() {
             let tooltip = appearance
                 .ui_builder()
-                .tool_tip(WORKSPACE_OVERRIDE_TOOLTIP_TEXT.to_string())
+                .tool_tip(warp_i18n::tr(WORKSPACE_OVERRIDE_TOOLTIP_TEXT_KEY))
                 .build()
                 .finish();
             stack.add_positioned_child(

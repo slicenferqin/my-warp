@@ -95,18 +95,25 @@ impl SearchItem for FileSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
+        let path = self.path.display().to_string();
         if self.is_directory {
-            format!("Directory: {}", self.path.display())
+            warp_i18n::tr_with_args(
+                "command-palette-file-accessibility-directory",
+                &[("path", &path)],
+            )
         } else {
-            format!("File: {}", self.path.display())
+            warp_i18n::tr_with_args(
+                "command-palette-file-accessibility-file",
+                &[("path", &path)],
+            )
         }
     }
 
     fn accessibility_help_message(&self) -> Option<String> {
         Some(if self.is_directory {
-            "Press Enter to navigate to this directory".to_string()
+            warp_i18n::tr("command-palette-file-accessibility-help-directory")
         } else {
-            "Press Enter to open this file".to_string()
+            warp_i18n::tr("command-palette-file-accessibility-help-file")
         })
     }
 
@@ -160,7 +167,10 @@ impl SearchItem for CreateFileSearchItem {
         let text_color = highlight_state.sub_text_fill(appearance).into_solid();
 
         let label = Text::new_inline(
-            format!("Create {}…", &self.file_name),
+            warp_i18n::tr_with_args(
+                "command-palette-create-file",
+                &[("file_name", &self.file_name)],
+            ),
             appearance.ui_font_family(),
             appearance.monospace_font_size(),
         )
@@ -194,13 +204,16 @@ impl SearchItem for CreateFileSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Create file: {}", self.file_name)
+        warp_i18n::tr_with_args(
+            "command-palette-create-file-accessibility-label",
+            &[("file_name", &self.file_name)],
+        )
     }
 
     fn accessibility_help_message(&self) -> Option<String> {
-        Some(format!(
-            "Press Enter to create {} in the current directory",
-            self.file_name
+        Some(warp_i18n::tr_with_args(
+            "command-palette-create-file-accessibility-help",
+            &[("file_name", &self.file_name)],
         ))
     }
 

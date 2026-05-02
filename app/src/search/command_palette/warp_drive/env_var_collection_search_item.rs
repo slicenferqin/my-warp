@@ -56,14 +56,15 @@ impl SearchItem for EnvVarCollectionSearchItem {
         app: &AppContext,
     ) -> Box<dyn Element> {
         let appearance = Appearance::as_ref(app);
+        let title = self
+            .cloud_env_var_collection
+            .model()
+            .string_model
+            .title
+            .clone()
+            .unwrap_or_else(|| warp_i18n::tr("command-palette-untitled"));
         let mut title_text = Text::new_inline(
-            self.cloud_env_var_collection
-                .model()
-                .string_model
-                .title
-                .clone()
-                .unwrap_or("Untitled".to_owned())
-                .to_owned(),
+            title,
             appearance.ui_font_family(),
             appearance.monospace_font_size(),
         )
@@ -162,14 +163,16 @@ impl SearchItem for EnvVarCollectionSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!(
-            "Environment Variables: {}",
-            self.cloud_env_var_collection
-                .model()
-                .string_model
-                .title
-                .clone()
-                .unwrap_or("Untitled".to_owned())
+        let title = self
+            .cloud_env_var_collection
+            .model()
+            .string_model
+            .title
+            .clone()
+            .unwrap_or_else(|| warp_i18n::tr("command-palette-untitled"));
+        warp_i18n::tr_with_args(
+            "command-palette-env-vars-accessibility-label",
+            &[("title", &title)],
         )
     }
 }

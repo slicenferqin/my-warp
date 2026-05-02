@@ -962,12 +962,16 @@ impl LoginSlideView {
                 .with_width(16.)
                 .with_height(16.)
                 .finish();
-            let text_el = FormattedTextElement::from_str(item, appearance.ui_font_family(), 14.)
-                .with_color(feature_row_color)
-                .with_weight(Weight::Normal)
-                .with_alignment(TextAlignment::Left)
-                .with_line_height_ratio(1.0)
-                .finish();
+            let text_el = FormattedTextElement::from_str(
+                warp_i18n::tr(item),
+                appearance.ui_font_family(),
+                14.,
+            )
+            .with_color(feature_row_color)
+            .with_weight(Weight::Normal)
+            .with_alignment(TextAlignment::Left)
+            .with_line_height_ratio(1.0)
+            .finish();
             let row = Flex::row()
                 .with_cross_axis_alignment(CrossAxisAlignment::Center)
                 .with_child(icon_el)

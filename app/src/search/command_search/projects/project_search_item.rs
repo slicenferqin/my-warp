@@ -145,7 +145,10 @@ impl SearchItem for ProjectSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Project: {}", self.name)
+        warp_i18n::tr_with_args(
+            "command-search-project-accessibility-label",
+            &[("name", &self.name)],
+        )
     }
 
     fn dedup_key(&self) -> Option<String> {

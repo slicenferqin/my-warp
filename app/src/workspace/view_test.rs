@@ -287,7 +287,8 @@ fn open_worktree_sidecar(workspace: &ViewHandle<Workspace>, app: &mut App) {
                 menu.items().iter().position(|item| {
                     matches!(
                         item,
-                        MenuItem::Item(fields) if fields.label() == "New worktree config"
+                        MenuItem::Item(fields)
+                            if fields.label() == warp_i18n::tr("app-workspace-new-worktree-config")
                     )
                 })
             })
@@ -385,7 +386,9 @@ fn test_worktree_sidecar_pointer_entry_does_not_select_top_repo() {
                     menu.items().iter().position(|item| {
                         matches!(
                             item,
-                            MenuItem::Item(fields) if fields.label() == "New worktree config"
+                            MenuItem::Item(fields)
+                                if fields.label()
+                                    == warp_i18n::tr("app-workspace-new-worktree-config")
                         )
                     })
                 })
@@ -690,7 +693,11 @@ fn reopen_closed_session_menu_item(
     menu_items: &[MenuItem<WorkspaceAction>],
 ) -> &MenuItemFields<WorkspaceAction> {
     match menu_items.last() {
-        Some(MenuItem::Item(fields)) if fields.label() == "Reopen closed session" => fields,
+        Some(MenuItem::Item(fields))
+            if fields.label() == warp_i18n::tr("app-workspace-reopen-closed-session") =>
+        {
+            fields
+        }
         _ => panic!("expected Reopen closed session to be the last new-session menu item"),
     }
 }
@@ -2686,11 +2693,11 @@ fn test_unified_new_session_menu_uses_new_worktree_config_label_and_order() {
 
             assert_eq!(
                 labels.get(separator_index + 1),
-                Some(&"New worktree config".to_string())
+                Some(&warp_i18n::tr("app-workspace-new-worktree-config"))
             );
             assert_eq!(
                 labels.get(separator_index + 2),
-                Some(&"New tab config".to_string())
+                Some(&warp_i18n::tr("app-workspace-new-tab-config"))
             );
         });
     });
@@ -2913,7 +2920,9 @@ fn test_worktree_sidecar_hides_linked_worktrees_from_repo_list() {
             let main_repo_label = main_repo.to_string_lossy().to_string();
             let linked_worktree_label = linked_worktree.to_string_lossy().to_string();
 
-            assert!(labels.iter().any(|label| label == "Search repos"));
+            assert!(labels
+                .iter()
+                .any(|label| label == &warp_i18n::tr("app-tab-config-search-repos")));
             assert!(labels.iter().any(|label| label == &main_repo_label));
             assert!(!labels.iter().any(|label| label == &linked_worktree_label));
         });

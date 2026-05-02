@@ -24,24 +24,27 @@ impl std::fmt::Display for OnboardingIntention {
 
 pub use callout::{OnboardingCalloutView, OnboardingKeybindings};
 
-/// User-facing names of the AI features enabled when the agent intention is selected.
+/// Translation keys for user-facing AI features enabled when the agent intention is selected.
 /// Shared by the intention slide's agent card checklist and the login slide's
 /// skip-login confirmation dialog so the two always stay in sync.
 pub const AI_FEATURES: &[&str] = &[
-    "Warp agents",
-    "Oz cloud agents platform",
-    "Next command predictions",
-    "Prompt suggestions",
-    "Codebase context",
-    "Remote control with Claude Code, Codex, and other agents",
-    "Agents over SSH",
+    "app-onboarding-feature-warp-agents",
+    "app-onboarding-feature-oz-cloud-agents",
+    "app-onboarding-feature-next-command-predictions",
+    "app-onboarding-feature-prompt-suggestions",
+    "app-onboarding-feature-codebase-context",
+    "app-onboarding-feature-remote-control-agents",
+    "app-onboarding-feature-agents-over-ssh",
 ];
 
-/// User-facing names of the Warp Drive features enabled when the terminal
+/// Translation keys for user-facing Warp Drive features enabled when the terminal
 /// intention is selected with Warp Drive turned on. Shared by the login slide's
 /// skip-login confirmation dialog so the list stays in sync with any future
 /// surfaces that need it.
-pub const WARP_DRIVE_FEATURES: &[&str] = &["Warp Drive", "Session Sharing"];
+pub const WARP_DRIVE_FEATURES: &[&str] = &[
+    "app-onboarding-feature-warp-drive",
+    "app-onboarding-feature-session-sharing",
+];
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "bin")] {

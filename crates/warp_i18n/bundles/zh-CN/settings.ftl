@@ -1068,6 +1068,7 @@ settings-reset-to-default = 重置为默认值
 settings-environments-new-environment = 新建环境
 settings-privacy-zdr-badge = ZDR
 settings-warpify-ssh-sessions = Warpify SSH 会话
+settings-workspace-override-tooltip = 此选项由你所在组织的设置强制执行，无法自定义。
 command-palette-open-settings = 打开设置
 command-palette-open-settings-account = 打开设置：账户
 command-palette-open-settings-appearance = 打开设置：外观

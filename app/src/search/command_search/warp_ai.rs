@@ -36,9 +36,6 @@ use warpui::{
     AppContext, Element, SingletonEntity,
 };
 
-const OPEN_WARP_AI_ITEM_BODY_TEXT: &str = "Ask Warp AI for command suggestions";
-const TRANSLATE_WITH_WARP_AI_ITEM_BODY_TEXT: &str = "Translate into shell command using Warp AI";
-
 #[derive(Clone, Debug)]
 pub enum WarpAISearchItem {
     /// Translates the query within command search.
@@ -49,11 +46,15 @@ pub enum WarpAISearchItem {
 }
 
 impl WarpAISearchItem {
-    fn item_body_text(&self) -> &'static str {
+    fn item_body_text_i18n_key(&self) -> &'static str {
         match self {
-            WarpAISearchItem::Translate => TRANSLATE_WITH_WARP_AI_ITEM_BODY_TEXT,
-            WarpAISearchItem::Open => OPEN_WARP_AI_ITEM_BODY_TEXT,
+            WarpAISearchItem::Translate => "command-search-warp-ai-translate-body",
+            WarpAISearchItem::Open => "command-search-warp-ai-open-body",
         }
+    }
+
+    fn item_body_text(&self) -> String {
+        warp_i18n::tr(self.item_body_text_i18n_key())
     }
 }
 
@@ -140,7 +141,11 @@ impl SearchItem for WarpAISearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Warp AI: {}", self.item_body_text())
+        let label = self.item_body_text();
+        warp_i18n::tr_with_args(
+            "command-search-warp-ai-accessibility-label",
+            &[("label", &label)],
+        )
     }
 }
 
@@ -242,12 +247,11 @@ impl AsyncDataSource for WarpAIDataSource {
 impl DataSourceRunError for GenerateCommandsFromNaturalLanguageError {
     fn user_facing_error(&self) -> String {
         match self {
-            Self::BadPrompt => "No results found. Please try again with a more specific query.",
-            Self::AiProviderError => "Something went wrong. Please try again.",
-            Self::RateLimited => "Looks like you're out of AI credits. Please try again later.",
-            Self::Other => "Something went wrong. Please try again.",
+            Self::BadPrompt => warp_i18n::tr("command-search-ai-error-bad-prompt"),
+            Self::AiProviderError => warp_i18n::tr("command-search-ai-error-provider"),
+            Self::RateLimited => warp_i18n::tr("command-search-ai-error-rate-limited"),
+            Self::Other => warp_i18n::tr("command-search-ai-error-provider"),
         }
-        .to_string()
     }
 
     fn telemetry_payload(&self) -> serde_json::Value {

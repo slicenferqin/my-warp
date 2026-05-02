@@ -19,18 +19,18 @@ use crate::search::QueryFilter;
 use crate::settings::{AISettings, AISettingsChangedEvent};
 
 lazy_static! {
-    /// Map of sample queries to the [`QueryFilter`]s they employ.
+    /// Map of sample query i18n keys to the [`QueryFilter`]s they employ.
     ///
     /// These are rendered as clickable 'chips' in the zero state.
     static ref SAMPLE_QUERY_TO_FILTER: HashMap<&'static str, QueryFilter> = HashMap::from([
-        ("history: git checkout", QueryFilter::History),
-        ("workflows: run dev server", QueryFilter::Workflows),
+        ("command-search-sample-query-history", QueryFilter::History),
+        ("command-search-sample-query-workflows", QueryFilter::Workflows),
         (
-            "# find \"foo\" in files",
+            "command-search-sample-query-natural-language",
             QueryFilter::NaturalLanguage
         ),
         (
-            "notebooks: deploy production server",
+            "command-search-sample-query-notebooks",
             QueryFilter::Notebooks
         ),
     ]);
@@ -90,13 +90,9 @@ impl CommandSearchZeroStateView {
         for (sample_query, filter) in SAMPLE_QUERY_TO_FILTER.iter() {
             if valid_filters.contains(filter) {
                 row.add_child(
-                    Container::new(self.render_sample_query(
-                        sample_query.to_string(),
-                        *filter,
-                        appearance,
-                    ))
-                    .with_margin_right(styles::SAMPLE_QUERY_MARGIN)
-                    .finish(),
+                    Container::new(self.render_sample_query(*sample_query, *filter, appearance))
+                        .with_margin_right(styles::SAMPLE_QUERY_MARGIN)
+                        .finish(),
                 );
             }
         }
@@ -112,17 +108,17 @@ impl CommandSearchZeroStateView {
     /// [`SampleQuerySelected`] event.
     fn render_sample_query(
         &self,
-        sample_query: String,
+        sample_query_i18n_key: &'static str,
         filter: QueryFilter,
         appearance: &Appearance,
     ) -> Box<dyn Element> {
         let theme = appearance.theme();
         Hoverable::new(
-            self.sample_query_to_mouse_state_handle[sample_query.as_str()].clone(),
+            self.sample_query_to_mouse_state_handle[sample_query_i18n_key].clone(),
             |mouse_state| {
                 Container::new(
                     Text::new_inline(
-                        sample_query.clone(),
+                        warp_i18n::tr(sample_query_i18n_key),
                         appearance.monospace_font_family(),
                         appearance.monospace_font_size(),
                     )
@@ -196,7 +192,7 @@ impl View for CommandSearchZeroStateView {
 
         let command_search_text = Container::new(
             Text::new_inline(
-                "Command Search",
+                warp_i18n::tr("command-search-title"),
                 appearance.ui_font_family(),
                 styles::header_text_font_size(appearance),
             )
@@ -218,7 +214,7 @@ impl View for CommandSearchZeroStateView {
             .with_child(
                 Container::new(
                     Text::new_inline(
-                        "I'm looking for...",
+                        warp_i18n::tr("command-search-zero-state-looking-for"),
                         appearance.ui_font_family(),
                         styles::subheader_text_font_size(appearance),
                     )
@@ -237,7 +233,7 @@ impl View for CommandSearchZeroStateView {
             .with_child(
                 Container::new(
                     Text::new_inline(
-                        "Example queries",
+                        warp_i18n::tr("command-search-zero-state-example-queries"),
                         appearance.ui_font_family(),
                         styles::subheader_text_font_size(appearance),
                     )

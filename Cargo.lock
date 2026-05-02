@@ -8955,6 +8955,7 @@ dependencies = [
  "ui_components",
  "uuid",
  "warp_core",
+ "warp_i18n",
  "warp_logging",
  "warpui",
 ]

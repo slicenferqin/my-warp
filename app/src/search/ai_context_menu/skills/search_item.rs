@@ -129,6 +129,9 @@ impl SearchItem for SkillSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Skill: {}", self.name)
+        warp_i18n::tr_with_args(
+            "ai-context-menu-skill-accessibility-label",
+            &[("name", &self.name)],
+        )
     }
 }

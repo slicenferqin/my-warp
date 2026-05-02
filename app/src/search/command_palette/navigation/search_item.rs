@@ -101,17 +101,21 @@ impl crate::search::item::SearchItem for SearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!(
-            "Selected {}. {}.",
-            self.navigation_data().prompt(),
-            self.navigation_data()
-                .command_context()
-                .a11y_description()
-                .unwrap_or_default()
+        let prompt = self.navigation_data().prompt().to_string();
+        let description = self
+            .navigation_data()
+            .command_context()
+            .a11y_description()
+            .unwrap_or_default();
+        warp_i18n::tr_with_args(
+            "command-palette-navigation-accessibility-selected",
+            &[("prompt", &prompt), ("description", &description)],
         )
     }
 
     fn accessibility_help_message(&self) -> Option<String> {
-        Some("Press enter to navigate to this session.".into())
+        Some(warp_i18n::tr(
+            "command-palette-navigation-accessibility-help",
+        ))
     }
 }

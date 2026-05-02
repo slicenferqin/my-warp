@@ -3,7 +3,6 @@ use crate::terminal::available_shells::AvailableShell;
 use crate::terminal::view::TerminalAction;
 use crate::WorkspaceAction;
 use std::borrow::Cow;
-use std::fmt;
 use warpui::Action;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -23,18 +22,14 @@ pub(super) enum Direction {
     Left,
 }
 
-impl fmt::Display for Direction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Direction::Down => "Down",
-                Direction::Right => "Right",
-                Direction::Up => "Up",
-                Direction::Left => "Left",
-            }
-        )
+impl Direction {
+    fn localized_name(&self) -> String {
+        warp_i18n::tr(match self {
+            Direction::Down => "command-palette-new-session-direction-down",
+            Direction::Right => "command-palette-new-session-direction-right",
+            Direction::Up => "command-palette-new-session-direction-up",
+            Direction::Left => "command-palette-new-session-direction-left",
+        })
     }
 }
 
@@ -81,12 +76,27 @@ impl NewSessionOption {
 impl NewSessionOption {
     pub(super) fn new(id: NewSessionOptionId, config: NewSessionConfig) -> Self {
         let description = match &config {
-            NewSessionConfig::NewTab(shell) => format!("Create New Tab: {}", shell.short_name()),
+            NewSessionConfig::NewTab(shell) => {
+                let shell_name = shell.short_name().to_string();
+                warp_i18n::tr_with_args(
+                    "command-palette-new-session-create-new-tab",
+                    &[("shell", &shell_name)],
+                )
+            }
             NewSessionConfig::NewWindow(shell) => {
-                format!("Create New Window: {}", shell.short_name())
+                let shell_name = shell.short_name().to_string();
+                warp_i18n::tr_with_args(
+                    "command-palette-new-session-create-new-window",
+                    &[("shell", &shell_name)],
+                )
             }
             NewSessionConfig::Split(direction, shell) => {
-                format!("Split Pane {direction}: {}", shell.short_name())
+                let direction = direction.localized_name();
+                let shell_name = shell.short_name().to_string();
+                warp_i18n::tr_with_args(
+                    "command-palette-new-session-split-pane",
+                    &[("direction", &direction), ("shell", &shell_name)],
+                )
             }
         };
         Self {

@@ -103,6 +103,19 @@ pub enum ToolPanelView {
     ConversationListView,
 }
 
+impl ToolPanelView {
+    pub fn tooltip_text(self) -> String {
+        match self {
+            ToolPanelView::ProjectExplorer => warp_i18n::tr("app-left-panel-project-explorer"),
+            ToolPanelView::GlobalSearch { .. } => warp_i18n::tr("app-left-panel-global-search"),
+            ToolPanelView::WarpDrive => warp_i18n::tr("app-left-panel-warp-drive"),
+            ToolPanelView::ConversationListView => {
+                warp_i18n::tr("app-left-panel-agent-conversations")
+            }
+        }
+    }
+}
+
 /// Encapsulates the active view state to enforce that all mutations go through
 /// `active_view_state::set`, which handles necessary side effects.
 mod active_view_state {
@@ -383,7 +396,7 @@ impl LeftPanelView {
                 ToolbeltButtonConfig {
                     icon: Icon::FileCopy,
                     active_icon: None,
-                    tooltip_text: "Project explorer".to_string(),
+                    tooltip_text: view.tooltip_text(),
                     action: LeftPanelAction::ProjectExplorer,
                     render_with_active_state: false,
                     tooltip_keybinding: toolbelt_tooltip_keybinding(&tooltip_keybinding_names, ctx),
@@ -399,7 +412,7 @@ impl LeftPanelView {
                 ToolbeltButtonConfig {
                     icon: Icon::Search,
                     active_icon: None,
-                    tooltip_text: "Global search".to_string(),
+                    tooltip_text: view.tooltip_text(),
                     action: LeftPanelAction::GlobalSearch {
                         entry_focus: GlobalSearchEntryFocus::QueryEditor,
                     },
@@ -417,7 +430,7 @@ impl LeftPanelView {
                 ToolbeltButtonConfig {
                     icon: Icon::WarpDrive,
                     active_icon: None,
-                    tooltip_text: "Warp Drive".to_string(),
+                    tooltip_text: view.tooltip_text(),
                     action: LeftPanelAction::WarpDrive,
                     render_with_active_state: false,
                     tooltip_keybinding: toolbelt_tooltip_keybinding(&tooltip_keybinding_names, ctx),
@@ -433,7 +446,7 @@ impl LeftPanelView {
                 ToolbeltButtonConfig {
                     icon: Icon::Conversation,
                     active_icon: Some(Icon::Conversation),
-                    tooltip_text: "Agent conversations".to_string(),
+                    tooltip_text: view.tooltip_text(),
                     action: LeftPanelAction::ConversationListView,
                     render_with_active_state: false,
                     tooltip_keybinding: toolbelt_tooltip_keybinding(&tooltip_keybinding_names, ctx),
@@ -792,12 +805,12 @@ impl LeftPanelView {
 
         let tooltip = if let Some(keybinding) = tooltip_keybinding {
             ui_builder
-                .tool_tip_with_sublabel("Close panel".to_string(), keybinding)
+                .tool_tip_with_sublabel(warp_i18n::tr("app-left-panel-close-panel"), keybinding)
                 .build()
                 .finish()
         } else {
             ui_builder
-                .tool_tip("Close panel".to_string())
+                .tool_tip(warp_i18n::tr("app-left-panel-close-panel"))
                 .build()
                 .finish()
         };

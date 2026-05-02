@@ -82,6 +82,9 @@ impl SearchItem for CommandSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Command: {}", self.command)
+        warp_i18n::tr_with_args(
+            "ai-context-menu-command-accessibility-label",
+            &[("command", &self.command)],
+        )
     }
 }

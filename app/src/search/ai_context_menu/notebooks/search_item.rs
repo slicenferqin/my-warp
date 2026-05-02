@@ -188,9 +188,15 @@ impl SearchItem for NotebookSearchItem {
 
     fn accessibility_label(&self) -> String {
         if let Some(description) = &self.notebook_description {
-            format!("Notebook: {} - {}", self.notebook_name, description)
+            warp_i18n::tr_with_args(
+                "ai-context-menu-notebook-accessibility-label-with-description",
+                &[("name", &self.notebook_name), ("description", description)],
+            )
         } else {
-            format!("Notebook: {}", self.notebook_name)
+            warp_i18n::tr_with_args(
+                "ai-context-menu-notebook-accessibility-label",
+                &[("name", &self.notebook_name)],
+            )
         }
     }
 
@@ -199,7 +205,7 @@ impl SearchItem for NotebookSearchItem {
 
         // Use notebook name, or "Untitled" if empty
         let display_name = if self.notebook_name.is_empty() {
-            "Untitled".to_string()
+            warp_i18n::tr("ai-context-menu-untitled")
         } else {
             self.notebook_name.clone()
         };

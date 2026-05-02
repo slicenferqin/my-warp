@@ -203,14 +203,19 @@ impl Entity for NewSessionDataSource {
 
 type SearcherAction = <NewSessionDataSource as SyncDataSource>::Action;
 
-const SEARCHER_BASE_STRINGS: [&str; 6] = [
-    "Create New Tab",
-    "Create New Window",
-    "Split Pane Down",
-    "Split Pane Right",
-    "Split Pane Up",
-    "Split Pane Left",
-];
+fn searcher_base_strings() -> Vec<String> {
+    [
+        "command-palette-new-session-create-new-tab-base",
+        "command-palette-new-session-create-new-window-base",
+        "command-palette-new-session-split-pane-down-base",
+        "command-palette-new-session-split-pane-right-base",
+        "command-palette-new-session-split-pane-up-base",
+        "command-palette-new-session-split-pane-left-base",
+    ]
+    .into_iter()
+    .map(warp_i18n::tr)
+    .collect()
+}
 
 trait NewSessionSearcher {
     fn search(&self, _search_term: &str) -> anyhow::Result<Vec<QueryResult<SearcherAction>>>;
@@ -285,8 +290,8 @@ impl NewSessionSearcher for FuzzyNewSessionSearcher {
     }
 
     fn compute_max_match(&self, query_str: &str) -> Option<f64> {
-        SEARCHER_BASE_STRINGS
-            .iter()
+        searcher_base_strings()
+            .into_iter()
             .filter_map(|base| {
                 match_indices_case_insensitive(
                     base.to_lowercase().as_str(),
@@ -303,7 +308,7 @@ impl NewSessionSearcher for FuzzyNewSessionSearcher {
 mod full_text_searcher {
     use crate::define_search_schema;
     use crate::search::command_palette::new_session::data_source::{
-        NewSessionSearcher, SearcherAction, SEARCHER_BASE_STRINGS,
+        searcher_base_strings, NewSessionSearcher, SearcherAction,
     };
     use crate::search::command_palette::new_session::search_item::SearchItem;
     use crate::search::command_palette::new_session::{NewSessionOption, NewSessionOptionId};
@@ -402,9 +407,9 @@ mod full_text_searcher {
                 .create_async_searcher(DEFAULT_MEMORY_BUDGET, background_executor.clone());
             let mut max_match_searcher = BASE_TEXT_SEARCH_SCHEMA
                 .create_async_searcher(MIN_MEMORY_BUDGET, background_executor.clone());
-            let max_match_documents = SEARCHER_BASE_STRINGS.iter().map(|base| BaseTextDocument {
-                base_text: base.to_string(),
-            });
+            let max_match_documents = searcher_base_strings()
+                .into_iter()
+                .map(|base| BaseTextDocument { base_text: base });
             if max_match_searcher
                 .build_index_async(max_match_documents)
                 .is_err()

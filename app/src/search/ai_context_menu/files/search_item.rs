@@ -78,10 +78,17 @@ impl SearchItem for FileSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
+        let path = self.path.display().to_string();
         if self.is_directory {
-            format!("Directory: {}", self.path.display())
+            warp_i18n::tr_with_args(
+                "ai-context-menu-directory-accessibility-label",
+                &[("path", &path)],
+            )
         } else {
-            format!("File: {}", self.path.display())
+            warp_i18n::tr_with_args(
+                "ai-context-menu-file-accessibility-label",
+                &[("path", &path)],
+            )
         }
     }
 }

@@ -70,10 +70,15 @@ impl crate::search::item::SearchItem for SearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Selected {}.", self.launch_config.name)
+        warp_i18n::tr_with_args(
+            "command-palette-launch-config-accessibility-selected",
+            &[("name", &self.launch_config.name)],
+        )
     }
 
     fn accessibility_help_message(&self) -> Option<String> {
-        Some("Press enter to use this launch configuration.".into())
+        Some(warp_i18n::tr(
+            "command-palette-launch-config-accessibility-help",
+        ))
     }
 }

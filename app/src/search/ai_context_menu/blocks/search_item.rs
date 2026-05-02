@@ -20,20 +20,23 @@ use warp_core::command::ExitCode;
 /// Calculate how long ago a timestamp was
 fn time_ago_string(timestamp: Option<&DateTime<Local>>) -> String {
     let Some(timestamp) = timestamp else {
-        return "Just now".to_string();
+        return warp_i18n::tr("ai-context-menu-just-now");
     };
 
     let now = Local::now();
     let duration = now.signed_duration_since(*timestamp);
 
     if duration.num_seconds() < 60 {
-        "Just now".to_string()
+        warp_i18n::tr("ai-context-menu-just-now")
     } else if duration.num_minutes() < 60 {
-        format!("{} minutes ago", duration.num_minutes())
+        let minutes = duration.num_minutes().to_string();
+        warp_i18n::tr_with_args("ai-context-menu-minutes-ago", &[("count", &minutes)])
     } else if duration.num_hours() < 24 {
-        format!("{} hours ago", duration.num_hours())
+        let hours = duration.num_hours().to_string();
+        warp_i18n::tr_with_args("ai-context-menu-hours-ago", &[("count", &hours)])
     } else {
-        format!("{} days ago", duration.num_days())
+        let days = duration.num_days().to_string();
+        warp_i18n::tr_with_args("ai-context-menu-days-ago", &[("count", &days)])
     }
 }
 
@@ -136,7 +139,7 @@ impl SearchItem for BlockSearchItem {
 
         // Create sub text: last 3 lines of output
         let sub_text = if self.output_lines.is_empty() {
-            "No output".to_string()
+            warp_i18n::tr("ai-context-menu-no-output")
         } else {
             let joined = self.output_lines.join("\n").trim().to_string();
             // Additional safety truncation for the hover card
@@ -207,6 +210,9 @@ impl SearchItem for BlockSearchItem {
     }
 
     fn accessibility_label(&self) -> String {
-        format!("Block: {}", self.command)
+        warp_i18n::tr_with_args(
+            "ai-context-menu-block-accessibility-label",
+            &[("command", &self.command)],
+        )
     }
 }
