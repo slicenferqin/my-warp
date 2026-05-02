@@ -59,10 +59,8 @@ use warpui::{
 use crate::view_components::{Dropdown, DropdownItem};
 
 const PHOTO_SIZE: f32 = 40.;
-const REFERRAL_CTA: &str = "Earn rewards by sharing Warp with friends & colleagues";
 const REGULAR_TEXT_FONT_SIZE: f32 = 12.;
 const VERTICAL_MARGIN: f32 = 24.;
-const LOG_OUT_TEXT: &str = "Log out";
 lazy_static! {
     static ref SETTINGS_SYNC_BINDINGS_ADDED: Arc<Mutex<bool>> = Default::default();
 }
@@ -408,7 +406,7 @@ impl AccountWidget {
                 self.ui_state_handles.anonymous_user_sign_up_button.clone(),
             )
             .with_style(button_styles)
-            .with_text_label("Sign up".to_owned())
+            .with_text_label(warp_i18n::tr("settings-account-sign-up"))
             .build()
             .on_click(move |ctx, _, _| {
                 ctx.dispatch_typed_action(MainPageAction::SignupAnonymousUser);
@@ -420,7 +418,10 @@ impl AccountWidget {
             .with_cross_axis_alignment(CrossAxisAlignment::End);
         let current_user_id = auth_state.user_id().unwrap_or_default();
 
-        plan_info.add_child(render_customer_type_badge(appearance, "Free".into()));
+        plan_info.add_child(render_customer_type_badge(
+            appearance,
+            warp_i18n::tr("settings-account-plan-free"),
+        ));
         plan_info.add_child(
             Container::new(
                 appearance
@@ -432,7 +433,7 @@ impl AccountWidget {
                     .with_text_and_icon_label(
                         TextAndIcon::new(
                             TextAndIconAlignment::IconFirst,
-                            "Compare plans",
+                            warp_i18n::tr("settings-account-compare-plans"),
                             Icon::CoinsStacked.to_warpui_icon(appearance.theme().accent()),
                             MainAxisSize::Min,
                             MainAxisAlignment::Center,
@@ -568,7 +569,7 @@ impl AccountWidget {
                         appearance
                             .ui_builder()
                             .link(
-                                "Contact support".into(),
+                                warp_i18n::tr("settings-account-contact-support"),
                                 Some("mailto:support@warp.dev".into()),
                                 None,
                                 self.ui_state_handles.enterprise_contact_us_link.clone(),
@@ -585,7 +586,7 @@ impl AccountWidget {
                             appearance
                                 .ui_builder()
                                 .link(
-                                    "Manage billing".into(),
+                                    warp_i18n::tr("settings-account-manage-billing"),
                                     None,
                                     Some(Box::new(move |ctx| {
                                         ctx.dispatch_typed_action(
@@ -606,16 +607,20 @@ impl AccountWidget {
                     // If the team is upgradeable to self-serve tier, show them the upgrade link.
                     if team.billing_metadata.can_upgrade_to_higher_tier_plan() {
                         let description = match team.billing_metadata.customer_type {
-                            CustomerType::Prosumer => "Upgrade to Turbo plan",
-                            CustomerType::Turbo => "Upgrade to Lightspeed plan",
-                            _ => "Compare plans",
+                            CustomerType::Prosumer => {
+                                warp_i18n::tr("settings-account-upgrade-to-turbo-plan")
+                            }
+                            CustomerType::Turbo => {
+                                warp_i18n::tr("settings-account-upgrade-to-lightspeed-plan")
+                            }
+                            _ => warp_i18n::tr("settings-account-compare-plans"),
                         };
                         let team_uid = team.uid;
                         plan_info.add_child(
                             appearance
                                 .ui_builder()
                                 .link(
-                                    description.into(),
+                                    description,
                                     None,
                                     Some(Box::new(move |ctx| {
                                         ctx.dispatch_typed_action(MainPageAction::Upgrade {
@@ -634,14 +639,15 @@ impl AccountWidget {
                 }
             }
         } else {
-            let plan_badge_child = render_customer_type_badge(appearance, "Free".into());
+            let plan_badge_child =
+                render_customer_type_badge(appearance, warp_i18n::tr("settings-account-plan-free"));
             plan_info.add_child(plan_badge_child);
 
             plan_info.add_child(
                 appearance
                     .ui_builder()
                     .link(
-                        "Compare plans".into(),
+                        warp_i18n::tr("settings-account-compare-plans"),
                         None,
                         Some(Box::new(move |ctx| {
                             ctx.dispatch_typed_action(MainPageAction::Upgrade {
@@ -676,7 +682,7 @@ impl SettingsWidget for AccountWidget {
     type View = MainSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "account sign up"
+        "account sign up 账户 注册 登录"
     }
 
     fn render(
@@ -740,7 +746,7 @@ impl SettingsWidget for LanguageWidget {
     type View = MainSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "language locale chinese english system"
+        "language locale chinese english system 语言 中文 英文 系统 跟随系统"
     }
 
     fn render(
@@ -778,7 +784,7 @@ impl SettingsWidget for SettingsSyncWidget {
     type View = MainSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "settings sync"
+        "settings sync 设置同步 同步设置"
     }
 
     fn should_render(&self, app: &AppContext) -> bool {
@@ -805,7 +811,7 @@ impl SettingsWidget for SettingsSyncWidget {
         };
 
         Container::new(render_body_item::<MainPageAction>(
-            "Settings sync".to_string(),
+            warp_i18n::tr("settings-account-settings-sync"),
             Some(label_info),
             // Cloud prefs are always synced, so no need to show the local-only icon.
             LocalOnlyIconState::Hidden,
@@ -867,7 +873,7 @@ impl SettingsWidget for EarnRewardsWidget {
     type View = MainSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "earn rewards referral share friends"
+        "earn rewards referral share friends 奖励 推荐 邀请 好友 同事"
     }
 
     fn should_render(&self, app: &AppContext) -> bool {
@@ -885,11 +891,11 @@ impl SettingsWidget for EarnRewardsWidget {
         Container::new(
             self.render_row(
                 appearance,
-                REFERRAL_CTA,
+                &warp_i18n::tr("settings-account-referral-cta"),
                 appearance
                     .ui_builder()
                     .link(
-                        "Refer a friend".into(),
+                        warp_i18n::tr("settings-account-refer-a-friend"),
                         None,
                         Some(Box::new(move |ctx| {
                             ctx.dispatch_typed_action(WorkspaceAction::ShowReferralSettingsPage);
@@ -925,11 +931,11 @@ impl VersionInfoWidget {
             .with_opacity(60)
             .into();
         struct StatusContent {
-            text: &'static str,
+            text: String,
             color: ColorU,
         }
         struct CallToActionContent {
-            text: &'static str,
+            text: String,
             action: MainPageAction,
         }
 
@@ -939,73 +945,73 @@ impl VersionInfoWidget {
                 match autoupdate::get_update_state(app) {
                     AutoupdateStage::NoUpdateAvailable => (
                         Some(StatusContent {
-                            text: "Up to date",
+                            text: warp_i18n::tr("settings-account-update-up-to-date"),
                             color: faded_text_color,
                         }),
                         Some(CallToActionContent {
-                            text: "Check for updates",
+                            text: warp_i18n::tr("settings-account-update-check-for-updates"),
                             action: MainPageAction::CheckForUpdate,
                         }),
                     ),
                     AutoupdateStage::CheckingForUpdate => (
                         Some(StatusContent {
-                            text: "checking for update...",
+                            text: warp_i18n::tr("settings-account-update-checking"),
                             color: faded_text_color,
                         }),
                         None,
                     ),
                     AutoupdateStage::DownloadingUpdate => (
                         Some(StatusContent {
-                            text: "downloading update...",
+                            text: warp_i18n::tr("settings-account-update-downloading"),
                             color: faded_text_color,
                         }),
                         None,
                     ),
                     AutoupdateStage::UpdateReady { .. } => (
                         Some(StatusContent {
-                            text: "Update available",
+                            text: warp_i18n::tr("settings-account-update-available"),
                             color: ansi_red,
                         }),
                         Some(CallToActionContent {
-                            text: "Relaunch Warp",
+                            text: warp_i18n::tr("settings-account-update-relaunch"),
                             action: MainPageAction::Relaunch,
                         }),
                     ),
                     AutoupdateStage::Updating { .. } => (
                         Some(StatusContent {
-                            text: "Updating...",
+                            text: warp_i18n::tr("settings-account-update-updating"),
                             color: faded_text_color,
                         }),
                         None,
                     ),
                     AutoupdateStage::UpdatedPendingRestart { .. } => (
                         Some(StatusContent {
-                            text: "Installed update",
+                            text: warp_i18n::tr("settings-account-update-installed"),
                             color: faded_text_color,
                         }),
                         Some(CallToActionContent {
-                            text: "Relaunch Warp",
+                            text: warp_i18n::tr("settings-account-update-relaunch"),
                             action: MainPageAction::Relaunch,
                         }),
                     ),
                     AutoupdateStage::UnableToUpdateToNewVersion { .. } => (
                         Some(StatusContent {
-                            text: "A new version of Warp is available but can't be installed",
+                            text: warp_i18n::tr("settings-account-update-unable-to-install"),
                             color: ansi_red,
                         }),
                         Some(CallToActionContent {
-                            text: "Update Warp manually",
+                            text: warp_i18n::tr("settings-account-update-manual"),
                             // note: the handler for this action is a no-op
                             action: MainPageAction::DownloadUpdate,
                         }),
                     ),
                     AutoupdateStage::UnableToLaunchNewVersion { .. } => (
                         Some(StatusContent {
-                            text: "A new version of Warp is installed but can't be launched.",
+                            text: warp_i18n::tr("settings-account-update-unable-to-launch"),
                             color: ansi_red,
                         }),
                         Some(CallToActionContent {
-                            text: "Update Warp manually",
+                            text: warp_i18n::tr("settings-account-update-manual"),
                             // note: the handler for this action is a no-op
                             action: MainPageAction::DownloadUpdate,
                         }),
@@ -1022,7 +1028,7 @@ impl VersionInfoWidget {
                     1.0,
                     Align::new(
                         Text::new_inline(
-                            "Version".to_string(),
+                            warp_i18n::tr("settings-account-version"),
                             appearance.ui_font_family(),
                             REGULAR_TEXT_FONT_SIZE,
                         )
@@ -1039,7 +1045,7 @@ impl VersionInfoWidget {
                 appearance
                     .ui_builder()
                     .link(
-                        call_to_action_content.text.into(),
+                        call_to_action_content.text,
                         None,
                         Some(Box::new(move |ctx| {
                             ctx.dispatch_typed_action(call_to_action_content.action.clone());
@@ -1120,7 +1126,7 @@ impl SettingsWidget for VersionInfoWidget {
     type View = MainSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "version update"
+        "version update 版本 更新"
     }
 
     fn render(
@@ -1150,7 +1156,7 @@ impl LogoutWidget {
         appearance
             .ui_builder()
             .button(ButtonVariant::Secondary, self.mouse_state.clone())
-            .with_text_label(LOG_OUT_TEXT.into())
+            .with_text_label(warp_i18n::tr("settings-account-log-out"))
             .with_style(UiComponentStyles {
                 font_size: Some(14.),
                 padding: Some(Coords::uniform(8.).left(32.).right(32.)),
@@ -1168,7 +1174,7 @@ impl SettingsWidget for LogoutWidget {
     type View = MainSettingsPageView;
 
     fn search_terms(&self) -> &str {
-        "sign out log out logout"
+        "sign out log out logout 退出 登出 注销"
     }
 
     fn should_render(&self, app: &AppContext) -> bool {

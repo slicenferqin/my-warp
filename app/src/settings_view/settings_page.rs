@@ -557,7 +557,7 @@ pub fn render_info_icon<T: Clone + Action>(
             13.,
             additional_info
                 .tooltip_override_text
-                .unwrap_or("Click to learn more in docs".to_owned()),
+                .unwrap_or_else(|| warp_i18n::tr("settings-tooltip-learn-more-docs")),
             additional_info.mouse_state.clone(),
         )
         .on_click(move |ctx, _, _| {
@@ -583,7 +583,7 @@ pub fn render_local_only_icon(
         .ui_builder()
         .local_only_icon_with_tooltip(
             13.,
-            custom_tooltip.unwrap_or("This setting is not synced to your other devices".to_owned()),
+            custom_tooltip.unwrap_or_else(|| warp_i18n::tr("settings-tooltip-local-only")),
             mouse_state.clone(),
         )
         .finish();
@@ -736,9 +736,13 @@ pub fn render_body_item_label_internal<T: Clone + Action>(
 }
 
 pub fn render_page_title(text: &str, size: f32, appearance: &Appearance) -> Box<dyn Element> {
+    let title = text
+        .parse::<SettingsSection>()
+        .map_or_else(|_| text.to_string(), |section| section.localized_label());
+
     Container::new(
         Align::new(
-            Text::new_inline(text.to_string(), appearance.ui_font_family(), size)
+            Text::new_inline(title, appearance.ui_font_family(), size)
                 .with_style(Properties::default().weight(Weight::Bold))
                 .with_color(appearance.theme().active_ui_text_color().into())
                 .finish(),

@@ -51,6 +51,14 @@ fn translates_static_keys_for_supported_locales() {
     assert_eq!(tr_in_locale(Locale::ZhCn, "settings-title"), "设置");
     assert_eq!(tr_in_locale(Locale::En, "common-save"), "Save");
     assert_eq!(tr_in_locale(Locale::ZhCn, "common-save"), "保存");
+    assert_eq!(
+        tr_in_locale(Locale::ZhCn, "settings-account-log-out"),
+        "退出登录"
+    );
+    assert_eq!(
+        tr_in_locale(Locale::ZhCn, "settings-tooltip-local-only"),
+        "此设置不会同步到你的其他设备"
+    );
 }
 
 #[test]
