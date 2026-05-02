@@ -186,6 +186,12 @@ cargo xtask i18n-coverage --scope settings-view
 - 服务端返回内容不被本地翻译层改写。
 - 缺失中文 key 时，开发环境能暴露问题，发布环境能回退到英文。
 
+## 发布与分发
+
+首版 fork 分发流程见 `docs/my-warp-release.md`。发布工作应使用 fork 专用的 `My Warp OSS Release` workflow，不复用官方 Warp 的 release workflow、Developer ID 证书、Sentry、Google Cloud Storage 或私有 channel 配置。
+
+第一版只要求产出 `oss` channel 的 macOS DMG，并在 release notes 中明确这是 self-signed 或 ad-hoc signed、未 notarized 的 fork 构建。正式签名、notarization、bundle 元数据改名和多平台包属于后续发布工程范围，不应阻塞汉化覆盖的第一版验收。
+
 ## 分阶段落地建议
 
 1. 新增 `crates/warp_i18n`，先接入 `en` 与 `zh-CN` 资源加载、`Locale`、`LanguagePreference`、`t!` 和受限的 `tr`。

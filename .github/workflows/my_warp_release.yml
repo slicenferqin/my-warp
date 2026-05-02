@@ -1,0 +1,224 @@
+name: My Warp OSS Release
+run-name: My Warp OSS ${{ inputs.tag_name }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag to create or update, e.g. my-warp-oss-v0.1.0'
+        required: true
+        type: string
+      runner_label:
+        description: 'macOS runner label. Use macos-26 by default; macos-26-xlarge if enabled for faster builds.'
+        required: true
+        type: choice
+        default: macos-26
+        options:
+          - macos-26
+          - macos-26-xlarge
+      release_name:
+        description: 'GitHub release title. If empty, the tag is used.'
+        required: false
+        type: string
+        default: ''
+      draft:
+        description: 'Create the GitHub release as a draft.'
+        required: true
+        type: boolean
+        default: true
+      prerelease:
+        description: 'Mark the GitHub release as a prerelease.'
+        required: true
+        type: boolean
+        default: true
+      publish_release:
+        description: 'Create or update a GitHub Release. If false, only workflow artifacts are uploaded.'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: my-warp-oss-release-${{ github.ref }}-${{ inputs.tag_name }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RELEASE_CHANNEL: oss
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build_macos:
+    name: Build macOS OSS DMG
+    runs-on: ${{ inputs.runner_label }}
+    timeout-minutes: 150
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate release inputs
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+          RELEASE_NAME_INPUT: ${{ inputs.release_name }}
+        run: |
+          set -euo pipefail
+
+          TAG="$TAG_NAME"
+          if [[ ! "$TAG" =~ ^my-warp-oss-v[0-9]+(\.[0-9]+){2}(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::tag_name must look like my-warp-oss-v0.1.0 or my-warp-oss-v0.1.0-rc1"
+            exit 1
+          fi
+
+          if [[ "$RELEASE_NAME_INPUT" == *$'\n'* ]]; then
+            echo "::error::release_name must be a single line"
+            exit 1
+          fi
+
+      - name: Prepare macOS environment
+        uses: ./.github/actions/prepare_environment
+        with:
+          target_os: macos
+          is_self_hosted: false
+          install_release_deps: true
+
+      - name: Setup Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version: stable
+
+      - name: Install macOS release tools
+        run: |
+          set -euo pipefail
+
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          ./script/install_cargo_bundle
+          if ! command -v create-dmg >/dev/null 2>&1; then
+            brew install create-dmg
+          fi
+
+      - name: Print build environment
+        run: |
+          set -euo pipefail
+
+          sw_vers
+          xcodebuild -version
+          rustc --version
+          cargo --version
+
+      - name: Validate i18n resources
+        run: |
+          set -euo pipefail
+
+          cargo xtask check-i18n --check-parity
+          cargo xtask check-i18n --mode hard
+
+      - name: Verify release compilation flags
+        run: |
+          set -euo pipefail
+
+          ./script/bundle --channel "$RELEASE_CHANNEL" --check-only --nosign
+
+      - name: Build self-signed OSS DMG
+        id: bundle_app
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          ./script/bundle \
+            --channel "$RELEASE_CHANNEL" \
+            --release-tag "$TAG_NAME" \
+            --selfsign
+
+      - name: Stage release artifacts
+        id: stage_artifacts
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+          RELEASE_NAME_INPUT: ${{ inputs.release_name }}
+          DMG_SOURCE: ${{ steps.bundle_app.outputs.dmg_path }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          TAG="$TAG_NAME"
+          DMG_NAME="My-Warp-${TAG}-macos-universal-unnotarized.dmg"
+
+          if [[ ! -f "$DMG_SOURCE" ]]; then
+            echo "::error::Expected DMG was not produced: $DMG_SOURCE"
+            exit 1
+          fi
+
+          cp "$DMG_SOURCE" "dist/${DMG_NAME}"
+
+          shasum -a 256 "dist/${DMG_NAME}" > dist/SHA256SUMS.txt
+
+          RELEASE_NAME="$RELEASE_NAME_INPUT"
+          if [[ -z "$RELEASE_NAME" ]]; then
+            RELEASE_NAME="My Warp OSS ${TAG}"
+          fi
+
+          {
+            echo "## My Warp OSS ${TAG}"
+            echo
+            echo "My Warp OSS Chinese localization build."
+            echo
+            echo "### Build"
+            echo
+            echo "- Source ref: \`${GITHUB_REF_NAME}\`"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Channel: \`oss\`"
+            echo "- macOS artifact: universal DMG"
+            echo "- App bundle name: \`WarpOss.app\`"
+            echo
+            echo "### Validation"
+            echo
+            echo "- \`cargo xtask check-i18n --check-parity\`"
+            echo "- \`cargo xtask check-i18n --mode hard\`"
+            echo "- \`./script/bundle --channel oss --check-only --nosign\`"
+            echo "- \`./script/bundle --channel oss --release-tag ${TAG} --selfsign\`"
+            echo
+            echo "### macOS Trust Notice"
+            echo
+            echo "This fork build is self-signed or ad-hoc signed and is not notarized with an Apple Developer ID certificate. macOS Gatekeeper may require manual approval on first launch."
+          } > dist/RELEASE_NOTES.md
+
+          echo "release_name=${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "dmg_path=dist/${DMG_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: my-warp-oss-macos-${{ inputs.tag_name }}
+          path: |
+            dist/*.dmg
+            dist/SHA256SUMS.txt
+            dist/RELEASE_NOTES.md
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Create or update GitHub release
+        if: ${{ inputs.publish_release == true }}
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.stage_artifacts.outputs.release_name }}
+          body_path: dist/RELEASE_NOTES.md
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          make_latest: false
+          fail_on_unmatched_files: true
+          overwrite_files: true
+          files: |
+            dist/*.dmg
+            dist/SHA256SUMS.txt
+          token: ${{ secrets.GITHUB_TOKEN }}
