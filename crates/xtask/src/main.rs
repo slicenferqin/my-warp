@@ -2,6 +2,8 @@ use anyhow::Result;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use warp_i18n::{I18nCheckMode, I18nCheckOptions, check_bundles};
 
+mod i18n_coverage;
+
 #[derive(Debug, Parser)]
 #[command(author, version, about = "Workspace automation tasks")]
 struct Cli {
@@ -12,6 +14,7 @@ struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     CheckI18n(CheckI18nArgs),
+    I18nCoverage(i18n_coverage::I18nCoverageArgs),
 }
 
 #[derive(Debug, Args)]
@@ -42,6 +45,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Command::CheckI18n(args) => check_i18n(args),
+        Command::I18nCoverage(args) => i18n_coverage::run(args),
     }
 }
 

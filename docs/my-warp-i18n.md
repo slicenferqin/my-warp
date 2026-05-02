@@ -168,9 +168,10 @@ cargo check -p warp_i18n
 cargo check --bin warp-oss -p warp
 cargo xtask check-i18n --check-parity
 cargo xtask check-i18n --mode hard
+cargo xtask i18n-coverage --scope settings-view
 ```
 
-其中 `cargo xtask check-i18n` 是后续需要新增或接入的校验入口；在该命令落地前，PR 需要说明当前使用了什么临时脚本或人工检查替代。
+其中 `cargo xtask check-i18n` 是 key parity 与 FTL 语法校验入口。`cargo xtask i18n-coverage --scope settings-view` 是启发式源码审计入口，用于统计 Settings 代码中已接入的 i18n 调用点和候选裸 UI 字符串；它不是产品级覆盖率证明，输出的候选项需要人工判断后再迁移。全 `app/src` 范围可用 `--scope app` 粗扫，但其中会包含大量内部错误、调试和动态内容，不能作为 PR 覆盖率口径。
 
 ## 手动验收
 
