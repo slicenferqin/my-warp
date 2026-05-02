@@ -882,7 +882,7 @@ impl FeaturesPageAction {
                 action: "QuakeEditorSetPinScreen".to_string(),
                 value: screen
                     .map(|idx| format!("{idx}"))
-                    .unwrap_or_else(|| "Active Screen".into()),
+                    .unwrap_or_else(|| "active_screen".into()),
             },
             Self::QuakeEditorResetWidthHeight => TelemetryEvent::FeaturesPageAction {
                 action: "QuakeEditorResetWidthHeight".to_string(),
@@ -2077,22 +2077,22 @@ impl FeaturesPageView {
             let mut dropdown = Dropdown::new(ctx);
 
             let top = DropdownItem::new(
-                "Pin to top",
+                warp_i18n::tr("settings-features-keys-quake-pin-top"),
                 FeaturesPageAction::QuakeEditorSetPinPosition(QuakeModePinPosition::Top),
             );
 
             let bottom = DropdownItem::new(
-                "Pin to bottom",
+                warp_i18n::tr("settings-features-keys-quake-pin-bottom"),
                 FeaturesPageAction::QuakeEditorSetPinPosition(QuakeModePinPosition::Bottom),
             );
 
             let left = DropdownItem::new(
-                "Pin to left",
+                warp_i18n::tr("settings-features-keys-quake-pin-left"),
                 FeaturesPageAction::QuakeEditorSetPinPosition(QuakeModePinPosition::Left),
             );
 
             let right = DropdownItem::new(
-                "Pin to right",
+                warp_i18n::tr("settings-features-keys-quake-pin-right"),
                 FeaturesPageAction::QuakeEditorSetPinPosition(QuakeModePinPosition::Right),
             );
 
@@ -3184,26 +3184,31 @@ impl FeaturesPageView {
     ) {
         self.graphics_backend_dropdown.update(ctx, |dropdown, ctx| {
             if let Some(window) = ctx.windows().platform_window(ctx.window_id()) {
+                let supported_backends = window.supported_backends();
+                let preferred_backend = &GPUSettings::as_ref(ctx).preferred_backend;
+                let selected_index = preferred_backend
+                    .as_ref()
+                    .and_then(|preferred| {
+                        supported_backends
+                            .iter()
+                            .position(|backend| *backend == *preferred)
+                            .map(|index| index + 1)
+                    })
+                    .unwrap_or(0);
+
                 let mut items = vec![DropdownItem::new(
-                    "Default",
+                    warp_i18n::tr("common-default"),
                     FeaturesPageAction::SetPreferredGraphicsBackend(None),
                 )];
-                items.extend(window.supported_backends().into_iter().map(|backend| {
+                items.extend(supported_backends.into_iter().map(|backend| {
                     DropdownItem::new(
                         backend.to_label(),
                         FeaturesPageAction::SetPreferredGraphicsBackend(Some(backend)),
                     )
                 }));
                 dropdown.set_items(items, ctx);
+                dropdown.set_selected_by_index(selected_index, ctx);
             }
-            let gpu_settings = GPUSettings::as_ref(ctx);
-            dropdown.set_selected_by_name(
-                gpu_settings
-                    .preferred_backend
-                    .map(|backend| backend.to_label())
-                    .unwrap_or("Default"),
-                ctx,
-            );
         });
     }
 
@@ -3212,11 +3217,11 @@ impl FeaturesPageView {
         self.tab_behavior_dropdown.update(ctx, |dropdown, ctx| {
             let mut items = vec![
                 DropdownItem::new(
-                    TabBehavior::Completions.dropdown_item_label(),
+                    Self::tab_behavior_dropdown_item_label(TabBehavior::Completions),
                     FeaturesPageAction::SetTabBehavior(TabBehavior::Completions),
                 ),
                 DropdownItem::new(
-                    TabBehavior::Autosuggestions.dropdown_item_label(),
+                    Self::tab_behavior_dropdown_item_label(TabBehavior::Autosuggestions),
                     FeaturesPageAction::SetTabBehavior(TabBehavior::Autosuggestions),
                 ),
             ];
@@ -3225,12 +3230,13 @@ impl FeaturesPageView {
             // selectable option from the dropdown.
             if matches!(*self.tab_behavior, TabBehavior::UserDefined) {
                 items.push(DropdownItem::new(
-                    TabBehavior::UserDefined.dropdown_item_label(),
+                    Self::tab_behavior_dropdown_item_label(TabBehavior::UserDefined),
                     FeaturesPageAction::SetTabBehavior(TabBehavior::UserDefined),
                 ));
             }
             dropdown.set_items(items, ctx);
-            dropdown.set_selected_by_name(self.tab_behavior.dropdown_item_label(), ctx);
+            dropdown
+                .set_selected_by_index(Self::tab_behavior_dropdown_index(*self.tab_behavior), ctx);
         });
     }
 
@@ -3295,10 +3301,34 @@ impl FeaturesPageView {
         self.refresh_tab_behavior_state(ctx);
     }
 
-    fn new_tab_placement_dropdown_item_label(val: NewTabPlacement) -> &'static str {
+    fn tab_behavior_dropdown_item_label(val: TabBehavior) -> String {
         match val {
-            NewTabPlacement::AfterAllTabs => "After all tabs",
-            NewTabPlacement::AfterCurrentTab => "After current tab",
+            TabBehavior::Completions => {
+                warp_i18n::tr("settings-features-terminal-open-completions-menu-action")
+            }
+            TabBehavior::Autosuggestions => {
+                warp_i18n::tr("settings-features-terminal-accept-autosuggestion-action")
+            }
+            TabBehavior::UserDefined => warp_i18n::tr("settings-features-terminal-user-defined"),
+        }
+    }
+
+    fn tab_behavior_dropdown_index(val: TabBehavior) -> usize {
+        match val {
+            TabBehavior::Completions => 0,
+            TabBehavior::Autosuggestions => 1,
+            TabBehavior::UserDefined => 2,
+        }
+    }
+
+    fn new_tab_placement_dropdown_item_label(val: NewTabPlacement) -> String {
+        match val {
+            NewTabPlacement::AfterAllTabs => {
+                warp_i18n::tr("settings-features-terminal-new-tab-after-all")
+            }
+            NewTabPlacement::AfterCurrentTab => {
+                warp_i18n::tr("settings-features-terminal-new-tab-after-current")
+            }
         }
     }
 
@@ -4152,7 +4182,7 @@ fn init_display_count_dropdown(
     ctx: &mut ViewContext<Dropdown<FeaturesPageAction>>,
 ) {
     let no_preference = DropdownItem::new(
-        "Active Screen",
+        warp_i18n::tr("settings-features-keys-active-screen"),
         //|| {
         FeaturesPageAction::QuakeEditorSetPinScreen(None), //}
     );
@@ -4172,12 +4202,20 @@ fn init_display_count_dropdown(
     });
 
     dropdown.set_items(items, ctx);
-    match quake_mode_settings.pin_screen {
-        Some(idx) if idx.is_valid_given_display_count(display_count) => {
-            dropdown.set_selected_by_name(format!("{idx}"), ctx)
+    let selected_index = match quake_mode_settings.pin_screen {
+        Some(DisplayIdx::Primary)
+            if DisplayIdx::Primary.is_valid_given_display_count(display_count) =>
+        {
+            1
         }
-        _ => dropdown.set_selected_by_name("Active Screen", ctx),
+        Some(DisplayIdx::External(idx))
+            if DisplayIdx::External(idx).is_valid_given_display_count(display_count) =>
+        {
+            idx + 2
+        }
+        _ => 0,
     };
+    dropdown.set_selected_by_index(selected_index, ctx);
 }
 
 #[derive(Default)]
@@ -4762,7 +4800,7 @@ impl SettingsWidget for AutoOpenCodeReviewPaneWidget {
         let general_settings = GeneralSettings::as_ref(app);
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Auto open code review panel".into(),
+            warp_i18n::tr("settings-code-auto-open-code-review-panel"),
             None,
             LocalOnlyIconState::for_setting(
                 AutoOpenCodeReviewPaneOnFirstAgentChange::storage_key(),
@@ -4783,7 +4821,9 @@ impl SettingsWidget for AutoOpenCodeReviewPaneWidget {
                     ctx.dispatch_typed_action(FeaturesPageAction::ToggleAutoOpenCodeReviewPane);
                 })
                 .finish(),
-            Some("When this setting is on, the code review panel will open on the first accepted diff of a conversation".into()),
+            Some(warp_i18n::tr(
+                "settings-code-auto-open-code-review-panel-description",
+            )),
         )
     }
 }
@@ -5977,7 +6017,7 @@ impl SettingsWidget for AtContextMenuInTerminalModeWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Enable '@' context menu in terminal mode".into(),
+            warp_i18n::tr("settings-features-terminal-at-context-menu"),
             None,
             LocalOnlyIconState::for_setting(
                 AtContextMenuInTerminalMode::storage_key(),
@@ -6033,7 +6073,7 @@ impl SettingsWidget for SlashCommandsInTerminalModeWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Enable slash commands in terminal mode".into(),
+            warp_i18n::tr("settings-features-terminal-slash-commands"),
             None,
             LocalOnlyIconState::for_setting(
                 EnableSlashCommandsInTerminal::storage_key(),
@@ -6085,7 +6125,7 @@ impl SettingsWidget for OutlineCodebaseSymbolsForAtContextMenuWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Outline codebase symbols for '@' context menu".into(),
+            warp_i18n::tr("settings-features-terminal-outline-codebase-symbols"),
             None,
             LocalOnlyIconState::for_setting(
                 OutlineCodebaseSymbolsForAtContextMenu::storage_key(),
@@ -6137,7 +6177,7 @@ impl SettingsWidget for ShowTerminalInputMessageLineWidget {
     ) -> Box<dyn Element> {
         let ui_builder = appearance.ui_builder();
         render_body_item::<FeaturesPageAction>(
-            "Show terminal input message line".into(),
+            warp_i18n::tr("settings-features-terminal-input-message-line"),
             None,
             LocalOnlyIconState::for_setting(
                 ShowTerminalInputMessageBar::storage_key(),
@@ -6291,30 +6331,34 @@ impl TabKeyBehaviorWidget {
             TabBehavior::Completions if view.autosuggestions_keystroke.is_empty() => {
                 // If the "Accept autosuggestions" keybinding is unbound, the
                 // user can always still accept with right arrow.
-                Some("→ accepts autosuggestions.".into())
+                Some(warp_i18n::tr(
+                    "settings-features-terminal-tab-accepts-autosuggestions-arrow",
+                ))
             }
-            TabBehavior::Completions => Some(format!(
-                "{} accepts autosuggestions.",
-                *view.autosuggestions_keystroke
+            TabBehavior::Completions => Some(warp_i18n::tr_with_args(
+                "settings-features-terminal-tab-accepts-autosuggestions-key",
+                &[("keybinding", view.autosuggestions_keystroke.as_str())],
             )),
             TabBehavior::Autosuggestions
                 if *input_settings.completions_open_while_typing.value() =>
             {
                 if view.completions_keystroke.is_empty() {
-                    Some("Completions open as you type.".into())
+                    Some(warp_i18n::tr(
+                        "settings-features-terminal-tab-completions-open-typing",
+                    ))
                 } else {
-                    Some(format!(
-                        "Completions open as you type (or {}).",
-                        *view.completions_keystroke
+                    Some(warp_i18n::tr_with_args(
+                        "settings-features-terminal-tab-completions-open-typing-or",
+                        &[("keybinding", view.completions_keystroke.as_str())],
                     ))
                 }
             }
-            TabBehavior::Autosuggestions if view.completions_keystroke.is_empty() => {
-                Some("Opening the completion menu is unbound.".into())
-            }
-            TabBehavior::Autosuggestions => Some(format!(
-                "{} opens completion menu.",
-                *view.completions_keystroke
+            TabBehavior::Autosuggestions if view.completions_keystroke.is_empty() => Some(
+                warp_i18n::tr("settings-features-terminal-tab-completion-unbound"),
+            ),
+            TabBehavior::Autosuggestions => Some(warp_i18n::tr_with_args(
+                "settings-features-terminal-tab-opens-completion-menu",
+                &[("keybinding", view.completions_keystroke.as_str())],
             )),
             TabBehavior::UserDefined => None,
         };
@@ -6373,7 +6417,7 @@ impl SettingsWidget for TabKeyBehaviorWidget {
             .with_child(
                 appearance
                     .ui_builder()
-                    .span("Tab key behavior")
+                    .span(warp_i18n::tr("settings-features-terminal-tab-key-behavior"))
                     .with_style(UiComponentStyles {
                         font_size: Some(CONTENT_FONT_SIZE + 1.),
                         ..Default::default()
@@ -6433,7 +6477,7 @@ impl SettingsWidget for CtrlTabBehaviorWidget {
             || {
                 render_dropdown_item(
                     appearance,
-                    "Ctrl+Tab behavior:",
+                    &warp_i18n::tr("settings-features-terminal-ctrl-tab-behavior"),
                     None,
                     None,
                     LocalOnlyIconState::for_setting(

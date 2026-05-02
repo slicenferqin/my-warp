@@ -1,6 +1,7 @@
 use crate::{
     I18nCheckMode, I18nCheckOptions, LanguagePreference, Locale, check_bundles, current_locale,
-    set_current_locale, set_language_preference, tr_in_locale, try_translate_in_locale,
+    set_current_locale, set_language_preference, tr_in_locale, tr_with_args_in_locale,
+    try_translate_in_locale,
 };
 use settings_value::SettingsValue;
 
@@ -84,6 +85,26 @@ fn translates_static_keys_for_supported_locales() {
 #[test]
 fn zh_cn_translation_uses_locale_specific_value() {
     assert_eq!(tr_in_locale(Locale::ZhCn, "settings-title"), "设置");
+}
+
+#[test]
+fn translates_keys_with_arguments() {
+    assert_eq!(
+        tr_with_args_in_locale(
+            Locale::En,
+            "settings-code-status-discovered",
+            &[("total_nodes", "42")]
+        ),
+        "Discovered 42 chunks"
+    );
+    assert_eq!(
+        tr_with_args_in_locale(
+            Locale::ZhCn,
+            "settings-code-status-discovered",
+            &[("total_nodes", "42")]
+        ),
+        "已发现 42 个块"
+    );
 }
 
 #[test]

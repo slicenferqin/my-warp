@@ -1612,8 +1612,9 @@ impl<V: warpui::View> PageType<V> {
                 if let Some(widget) = widget {
                     if widget.should_render(app) {
                         if let Some(title) = title {
+                            let title = warp_i18n::tr(title);
                             let col = Flex::column()
-                                .with_child(render_page_title(title, HEADER_FONT_SIZE, appearance))
+                                .with_child(render_page_title(&title, HEADER_FONT_SIZE, appearance))
                                 .with_child(widget.render_widget(view, false, appearance, app));
                             page = col.finish();
                         } else {
@@ -1631,7 +1632,11 @@ impl<V: warpui::View> PageType<V> {
             } => {
                 let mut page = Flex::column();
                 if let Some(title) = title {
-                    page.add_child(render_page_title(title, HEADER_FONT_SIZE, appearance));
+                    page.add_child(render_page_title(
+                        &warp_i18n::tr(title),
+                        HEADER_FONT_SIZE,
+                        appearance,
+                    ));
                 }
                 for widget in widgets {
                     let highlighted =
@@ -1650,7 +1655,11 @@ impl<V: warpui::View> PageType<V> {
             } => {
                 let mut page = Flex::column();
                 if let Some(title) = title {
-                    page.add_child(render_page_title(title, HEADER_FONT_SIZE, appearance));
+                    page.add_child(render_page_title(
+                        &warp_i18n::tr(title),
+                        HEADER_FONT_SIZE,
+                        appearance,
+                    ));
                 }
                 let num_categories = categories.len();
                 for (i, category) in categories.into_iter().enumerate() {

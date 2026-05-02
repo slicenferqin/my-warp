@@ -203,6 +203,19 @@ pub fn tr_in_locale(locale: Locale, key: &str) -> String {
     try_translate_in_locale(locale, key).unwrap_or_else(|_| key.to_string())
 }
 
+pub fn tr_with_args(key: impl AsRef<str>, args: &[(&str, &str)]) -> String {
+    tr_with_args_in_locale(current_locale(), key.as_ref(), args)
+}
+
+pub fn tr_with_args_in_locale(locale: Locale, key: &str, args: &[(&str, &str)]) -> String {
+    let mut fluent_args = FluentArgs::new();
+    for (name, value) in args {
+        fluent_args.set(*name, *value);
+    }
+
+    try_translate_with_args(locale, key, Some(&fluent_args)).unwrap_or_else(|_| key.to_string())
+}
+
 pub fn try_translate(key: &str) -> Result<String, TranslationError> {
     try_translate_in_locale(current_locale(), key)
 }
@@ -269,6 +282,7 @@ fn translate_from_locale(
 
 fn build_bundle(locale: Locale) -> Result<FluentBundle<FluentResource>, BundleError> {
     let mut bundle = FluentBundle::new(vec![locale.language_identifier()]);
+    bundle.set_use_isolating(false);
 
     for resource in resources_for_locale(locale) {
         let fluent_resource =
@@ -441,6 +455,7 @@ fn validate_resource(resource: &BundleResource, mode: I18nCheckMode) -> Result<(
 
     if mode == I18nCheckMode::Hard {
         let mut bundle = FluentBundle::new(vec![resource.locale.language_identifier()]);
+        bundle.set_use_isolating(false);
         bundle
             .add_resource(fluent_resource)
             .map_err(|errors| I18nCheckError::InvalidResource {

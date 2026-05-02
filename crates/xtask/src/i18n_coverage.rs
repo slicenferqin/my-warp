@@ -262,6 +262,9 @@ fn starts_ignored_block(trimmed: &str) -> bool {
         || trimmed.starts_with("impl Display for SettingsSection")
         || trimmed.starts_with("impl FromStr for SettingsSection")
         || trimmed.starts_with("pub fn init_actions_from_parent_view")
+        || trimmed.starts_with("fn telemetry_event(")
+        || (trimmed.starts_with("impl From<&") && trimmed.contains("LoginGatedFeature"))
+        || (trimmed.starts_with("impl TryFrom<&") && trimmed.contains("TelemetryEvent"))
 }
 
 fn update_brace_depth(line: &str, depth: usize) -> usize {
@@ -320,6 +323,7 @@ fn line_contains_code_char(line: &str, target: char) -> bool {
 
 fn localized_call_site_count(line: &str) -> usize {
     count_occurrences(line, "warp_i18n::tr(")
+        + count_occurrences(line, "warp_i18n::tr_with_args(")
         + count_occurrences(line, "warp_i18n::t!(")
         + count_occurrences(line, ".localized_label(")
         + count_occurrences(line, ".localized_label_in_locale(")
@@ -396,6 +400,10 @@ fn is_ignored_context(line: &str) -> bool {
         "warp_i18n::",
         "log::",
         "tracing::",
+        "debug!(",
+        "info!(",
+        "warn!(",
+        "error!(",
         "panic!(",
         "assert",
         "debug_assert",
@@ -420,6 +428,8 @@ fn is_ignored_context(line: &str) -> bool {
         "ctx.open_url",
         "OpenUrl(",
         "url_source",
+        "action:",
+        "value:",
     ];
 
     let trimmed = line.trim_start();
@@ -447,9 +457,12 @@ fn is_ignored_literal(literal: &str) -> bool {
         || literal.contains("${")
         || literal.contains("\\n")
         || literal.contains("{}")
+        || (literal.starts_with('{') && literal.ends_with('}'))
         || literal.starts_with('/')
         || literal.starts_with('.')
+        || literal.starts_with('%')
         || literal.starts_with('#')
+        || literal.starts_with('[')
         || is_internal_identifier_literal(literal)
     {
         return true;
@@ -461,7 +474,39 @@ fn is_ignored_literal(literal: &str) -> bool {
         || literal.starts_with("app:")
         || literal.starts_with("input:")
         || literal.starts_with("pane_group:")
+        || literal.starts_with("Could not find current ")
+        || literal.starts_with("Failed to ")
+        || literal.starts_with("Could not ")
+        || literal.starts_with("Successfully updated ")
+        || literal.starts_with("Unable to ")
+        || literal.starts_with("Ignoring ")
+        || literal.starts_with("Unrecognized ")
+        || literal.starts_with("Received an unexpected ")
+        || literal.starts_with("This server is not an installation ")
+        || literal.starts_with("Install server update is only supported ")
     {
+        return true;
+    }
+
+    if matches!(
+        literal,
+        "ESC"
+            | "JSON"
+            | "Gallery Id: None"
+            | "Gallery Id: {uuid}"
+            | "File-Based MCP Id: {uuid}"
+            | "Gallery MCP Id: {uuid}"
+            | "Templatable MCP Id: {template_uuid}"
+            | "Templatable MCP Installation Id: {uuid}"
+            | "Could not find cloud template"
+            | "Accept Autosuggestion"
+            | "Open Completions Menu"
+            | "Tab"
+            | "Left Option key is Meta"
+            | "Right Option key is Meta"
+            | "Left Alt key is Meta"
+            | "Right Alt key is Meta"
+    ) {
         return true;
     }
 
@@ -520,6 +565,18 @@ mod tests {
         assert!(!is_candidate_ui_string(
             r#"FixedBinding::empty("ShowConversationHistory", action, context)"#,
             "ShowConversationHistory"
+        ));
+        assert!(!is_candidate_ui_string(
+            r#"action: "ToggleCopyOnSelect".to_string(),"#,
+            "ToggleCopyOnSelect"
+        ));
+        assert!(!is_candidate_ui_string(
+            r#"value: format!("{mode:?}"),"#,
+            "{mode:?}"
+        ));
+        assert!(!is_candidate_ui_string(
+            r#"debug!("Refreshing GitHub auth URL")"#,
+            "Refreshing GitHub auth URL"
         ));
     }
 
