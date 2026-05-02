@@ -5256,7 +5256,7 @@ impl SettingsWidget for ConfirmCloseSharedSessionWidget {
         let ui_builder = appearance.ui_builder();
         let session_settings = SessionSettings::as_ref(app);
         render_body_item::<FeaturesPageAction>(
-            "Confirm before closing shared session".into(),
+            warp_i18n::tr("settings-features-session-confirm-close-shared"),
             None,
             LocalOnlyIconState::for_setting(
                 ShouldConfirmCloseSession::storage_key(),
@@ -6971,7 +6971,7 @@ impl SettingsWidget for WorkflowsInCommandSearch {
         let ui_builder = appearance.ui_builder();
         let workflow_settings = CommandSearchSettings::as_ref(app);
         render_body_item::<FeaturesPageAction>(
-            "Show Global Workflows in Command Search (ctrl-r)".into(),
+            warp_i18n::tr("settings-features-workflows-command-search"),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: Some(FeaturesPageAction::OpenUrl(
@@ -7026,14 +7026,14 @@ impl SettingsWidget for LinuxSelectionClipboardWidget {
         app: &AppContext,
     ) -> Box<dyn Element> {
         render_body_item::<FeaturesPageAction>(
-            "Honor linux selection clipboard".into(),
+            warp_i18n::tr("settings-features-system-linux-selection-clipboard"),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: None,
                 secondary_text: None,
-                tooltip_override_text: Some(
-                    "Whether the Linux primary clipboard should be supported.".into(),
-                ),
+                tooltip_override_text: Some(warp_i18n::tr(
+                    "settings-features-system-linux-selection-clipboard-tooltip",
+                )),
             }),
             LocalOnlyIconState::for_setting(
                 LinuxSelectionClipboard::storage_key(),
@@ -7080,7 +7080,7 @@ impl SettingsWidget for GPUWidget {
     ) -> Box<dyn Element> {
         let gpu_settings = GPUSettings::as_ref(app);
         let mut col = Flex::column().with_child(render_body_item::<FeaturesPageAction>(
-            "Prefer rendering new windows with integrated GPU (low power)".into(),
+            warp_i18n::tr("settings-features-system-integrated-gpu"),
             None,
             LocalOnlyIconState::for_setting(
                 PreferLowPowerGPU::storage_key(),
@@ -7110,7 +7110,10 @@ impl SettingsWidget for GPUWidget {
                 Container::new(
                     appearance
                         .ui_builder()
-                        .wrappable_text("Changes will apply to new windows.", true)
+                        .wrappable_text(
+                            warp_i18n::tr("settings-features-system-new-windows-change"),
+                            true,
+                        )
                         .with_style(UiComponentStyles {
                             font_color: Some(theme.sub_text_color(theme.background()).into_solid()),
                             ..Default::default()
@@ -7150,12 +7153,14 @@ impl SettingsWidget for WindowSystemWidget {
         let mut children = Flex::column();
         let force_x11 = *LinuxAppConfiguration::as_ref(app).force_x11.value();
         children.add_child(render_body_item::<FeaturesPageAction>(
-            "Use Wayland for window management".into(),
+            warp_i18n::tr("settings-features-system-wayland-window-management"),
             Some(AdditionalInfo {
                 mouse_state: self.additional_info_link.clone(),
                 on_click_action: None,
                 secondary_text: None,
-                tooltip_override_text: Some("Enables the use of Wayland".to_string()),
+                tooltip_override_text: Some(warp_i18n::tr(
+                    "settings-features-system-wayland-tooltip",
+                )),
             }),
             LocalOnlyIconState::for_setting(
                 ForceX11::storage_key(),
@@ -7180,12 +7185,12 @@ impl SettingsWidget for WindowSystemWidget {
             None,
         ));
 
-        let mut secondary_text =
-            "Enabling this setting disables global hotkey support. When disabled, text \
-                    may be blurry if your Wayland compositor is using fraction scaling (ex: 125%)."
-                .to_string();
+        let mut secondary_text = warp_i18n::tr("settings-features-system-wayland-description");
         if view.force_x11_changed {
-            secondary_text.push_str("\n\nRestart Warp for changes to take effect.");
+            secondary_text.push_str("\n\n");
+            secondary_text.push_str(&warp_i18n::tr(
+                "settings-features-system-restart-for-changes",
+            ));
         }
         let warp_theme = appearance.theme();
         children.add_child(
@@ -7226,7 +7231,7 @@ impl SettingsWidget for GraphicsBackendWidget {
         let theme = appearance.theme();
         let dropdown = render_dropdown_item(
             appearance,
-            "Preferred graphics backend",
+            &warp_i18n::tr("settings-features-system-preferred-graphics-backend"),
             None,
             None,
             LocalOnlyIconState::for_setting(
@@ -7247,7 +7252,14 @@ impl SettingsWidget for GraphicsBackendWidget {
             col.add_child(
                 appearance
                     .ui_builder()
-                    .wrappable_text(format!("Current backend: {}", backend.to_label()), true)
+                    .wrappable_text(
+                        format!(
+                            "{} {}",
+                            warp_i18n::tr("settings-features-system-current-backend-prefix"),
+                            backend.to_label()
+                        ),
+                        true,
+                    )
                     .with_style(UiComponentStyles {
                         font_color: Some(theme.sub_text_color(theme.background()).into_solid()),
                         ..Default::default()
@@ -7261,7 +7273,10 @@ impl SettingsWidget for GraphicsBackendWidget {
                 Container::new(
                     appearance
                         .ui_builder()
-                        .wrappable_text("Changes will apply to new windows.", true)
+                        .wrappable_text(
+                            warp_i18n::tr("settings-features-system-new-windows-change"),
+                            true,
+                        )
                         .with_style(UiComponentStyles {
                             font_color: Some(theme.sub_text_color(theme.background()).into_solid()),
                             ..Default::default()
