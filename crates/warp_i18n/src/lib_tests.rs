@@ -71,6 +71,14 @@ fn translates_static_keys_for_supported_locales() {
         tr_in_locale(Locale::En, "settings-privacy-policy-title"),
         "Privacy policy"
     );
+    assert_eq!(
+        tr_in_locale(Locale::ZhCn, "settings-appearance-category-themes"),
+        "主题"
+    );
+    assert_eq!(
+        tr_in_locale(Locale::ZhCn, "settings-appearance-input-mode-pin-bottom"),
+        "固定到底部（Warp 模式）"
+    );
 }
 
 #[test]

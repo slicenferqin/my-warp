@@ -1655,14 +1655,15 @@ impl<V: warpui::View> PageType<V> {
                 let num_categories = categories.len();
                 for (i, category) in categories.into_iter().enumerate() {
                     if !category.title.is_empty() {
+                        let category_title = warp_i18n::tr(category.title);
                         if let Some(subtitle) = category.subtitle {
                             page.add_child(render_sub_header_with_description(
                                 appearance,
-                                category.title,
-                                subtitle,
+                                category_title,
+                                warp_i18n::tr(subtitle),
                             ));
                         } else {
-                            page.add_child(render_sub_header(appearance, category.title, None));
+                            page.add_child(render_sub_header(appearance, category_title, None));
                         }
                     }
                     for widget in &category.widgets {
