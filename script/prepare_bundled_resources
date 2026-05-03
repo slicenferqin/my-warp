@@ -109,7 +109,18 @@ if [ -z "$NO_LICENSES" ]; then
       --manifest-path "$REPO_ROOT/Cargo.toml" \
       -c "$REPO_ROOT/about.toml" \
       -o "$LICENSES_OUTPUT" \
-      "$REPO_ROOT/about.hbs"
+      "$REPO_ROOT/about.hbs" \
+      2> >(awk '
+          /failed to parse license '\''GPL-2\.0'\'' into a valid expression: GPL-2\.0/ {
+              skip = 1
+              next
+          }
+          skip > 0 {
+              skip -= 1
+              next
+          }
+          { print > "/dev/stderr" }
+      ')
 
   # Append additional (non-Cargo) third-party licenses.
   for entry in "${ADDITIONAL_LICENSES[@]}"; do
