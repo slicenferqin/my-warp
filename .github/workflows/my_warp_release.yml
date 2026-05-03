@@ -169,26 +169,37 @@ jobs:
           {
             echo "## My Warp OSS ${TAG}"
             echo
-            echo "My Warp OSS Chinese localization build."
+            echo "这是 my-warp 的中文本地化构建。my-warp 是基于官方 Warp 开源仓库维护的个人化 fork，用户可见产品名为 My Warp。"
             echo
-            echo "### Build"
+            echo "### 本版重点"
             echo
-            echo "- Source ref: \`${GITHUB_REF_NAME}\`"
-            echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Channel: \`oss\`"
-            echo "- macOS artifact: universal DMG"
-            echo "- App bundle name: \`WarpOss.app\`"
+            echo "- 提供 macOS OSS universal DMG，便于下载、校验和本机安装。"
+            echo "- 保留上游 Warp 的基础能力，并面向中文系统用户提供高频 UI 汉化。"
+            echo "- 覆盖 Settings、onboarding、命令面板、全局搜索、资源中心、常见菜单、通用按钮和基础提示等主要路径。"
+            echo "- 本地翻译层只处理客户端 UI，不改写终端输出、AI 模型回复、Agent 运行结果或服务端返回内容。"
             echo
-            echo "### Validation"
+            echo "### 构建信息"
+            echo
+            echo "- 源码分支：\`${GITHUB_REF_NAME}\`"
+            echo "- 源码提交：\`${GITHUB_SHA}\`"
+            echo "- 构建渠道：\`oss\`"
+            echo "- macOS 产物：universal DMG"
+            echo "- 包内应用名：\`WarpOss.app\`"
+            echo "- 产物文件：\`My-Warp-${TAG}-macos-universal-unnotarized.dmg\`"
+            echo
+            echo "### 验证"
             echo
             echo "- \`cargo xtask check-i18n --check-parity\`"
             echo "- \`cargo xtask check-i18n --mode hard\`"
             echo "- \`./script/bundle --channel oss --check-only --nosign\`"
             echo "- \`./script/bundle --channel oss --release-tag ${TAG} --selfsign\`"
             echo
-            echo "### macOS Trust Notice"
+            echo "### 已知限制"
             echo
-            echo "This fork build is self-signed or ad-hoc signed and is not notarized with an Apple Developer ID certificate. macOS Gatekeeper may require manual approval on first launch."
+            echo "- 这是 fork 构建，不是 Warp 官方发布版本。"
+            echo "- 当前 DMG 使用 self-signed 或 ad-hoc signing，没有使用 Apple Developer ID notarization；macOS Gatekeeper 首次启动时可能需要手动允许打开。"
+            echo "- 当前包内仍沿用 \`WarpOss.app\`、\`warp-oss\` binary 和 \`dev.warp.WarpOss\` bundle id；完整品牌元数据改名会在后续版本处理。"
+            echo "- 本版本不会绕过官方账号、订阅、服务端、同步或 AI 能力限制。"
           } > dist/RELEASE_NOTES.md
 
           echo "release_name=${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
