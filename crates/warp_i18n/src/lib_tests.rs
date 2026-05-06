@@ -1,7 +1,7 @@
 use crate::{
-    I18nCheckMode, I18nCheckOptions, LanguagePreference, Locale, check_bundles, current_locale,
-    set_current_locale, set_language_preference, tr_in_locale, tr_with_args_in_locale,
-    try_translate_in_locale,
+    I18nCheckMode, I18nCheckOptions, LanguagePreference, Locale, cached_bundle_build_count,
+    check_bundles, current_locale, set_current_locale, set_language_preference, tr_in_locale,
+    tr_with_args_in_locale, try_translate_in_locale,
 };
 use settings_value::SettingsValue;
 
@@ -79,6 +79,21 @@ fn translates_static_keys_for_supported_locales() {
     assert_eq!(
         tr_in_locale(Locale::ZhCn, "settings-appearance-input-mode-pin-bottom"),
         "固定到底部（Warp 模式）"
+    );
+}
+
+#[test]
+fn translations_reuse_cached_bundles() {
+    let before = cached_bundle_build_count();
+
+    for _ in 0..100 {
+        assert_eq!(tr_in_locale(Locale::En, "settings-title"), "Settings");
+    }
+
+    let after = cached_bundle_build_count();
+    assert!(
+        after.saturating_sub(before) <= 2,
+        "translation should reuse cached bundles instead of rebuilding per call"
     );
 }
 

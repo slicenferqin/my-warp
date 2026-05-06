@@ -1,8 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::str::FromStr;
+#[cfg(test)]
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{OnceLock, RwLock};
 
-use fluent_bundle::{FluentArgs, FluentBundle, FluentResource};
+use fluent_bundle::{
+    FluentArgs, FluentBundle, FluentResource, concurrent::FluentBundle as ConcurrentFluentBundle,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use unic_langid::LanguageIdentifier;
@@ -249,7 +253,7 @@ fn translate_from_locale(
     key: &str,
     args: Option<&FluentArgs<'_>>,
 ) -> Result<String, TranslationError> {
-    let bundle = build_bundle(locale).map_err(|source| TranslationError::InvalidBundle {
+    let bundle = cached_bundle(locale).map_err(|source| TranslationError::InvalidBundle {
         locale,
         source: Box::new(source),
     })?;
@@ -280,8 +284,33 @@ fn translate_from_locale(
     }
 }
 
-fn build_bundle(locale: Locale) -> Result<FluentBundle<FluentResource>, BundleError> {
-    let mut bundle = FluentBundle::new(vec![locale.language_identifier()]);
+type CachedFluentBundle = ConcurrentFluentBundle<FluentResource>;
+
+fn cached_bundle(locale: Locale) -> Result<&'static CachedFluentBundle, BundleError> {
+    match locale {
+        Locale::En => {
+            static EN_BUNDLE: OnceLock<Result<CachedFluentBundle, BundleError>> = OnceLock::new();
+            EN_BUNDLE
+                .get_or_init(|| build_bundle(Locale::En))
+                .as_ref()
+                .map_err(|error| error.clone())
+        }
+        Locale::ZhCn => {
+            static ZH_CN_BUNDLE: OnceLock<Result<CachedFluentBundle, BundleError>> =
+                OnceLock::new();
+            ZH_CN_BUNDLE
+                .get_or_init(|| build_bundle(Locale::ZhCn))
+                .as_ref()
+                .map_err(|error| error.clone())
+        }
+    }
+}
+
+fn build_bundle(locale: Locale) -> Result<CachedFluentBundle, BundleError> {
+    #[cfg(test)]
+    BUNDLE_BUILD_COUNT.fetch_add(1, Ordering::Relaxed);
+
+    let mut bundle = CachedFluentBundle::new_concurrent(vec![locale.language_identifier()]);
     bundle.set_use_isolating(false);
 
     for resource in resources_for_locale(locale) {
@@ -309,6 +338,14 @@ fn build_bundle(locale: Locale) -> Result<FluentBundle<FluentResource>, BundleEr
     Ok(bundle)
 }
 
+#[cfg(test)]
+static BUNDLE_BUILD_COUNT: AtomicUsize = AtomicUsize::new(0);
+
+#[cfg(test)]
+fn cached_bundle_build_count() -> usize {
+    BUNDLE_BUILD_COUNT.load(Ordering::Relaxed)
+}
+
 #[derive(Debug, Error)]
 pub enum TranslationError {
     #[error("invalid {locale} translation bundle")]
@@ -332,7 +369,7 @@ pub enum TranslationError {
     },
 }
 
-#[derive(Debug, Error)]
+#[derive(Clone, Debug, Error)]
 pub enum BundleError {
     #[error("failed to parse `{path}`: {errors:?}")]
     Parse {
