@@ -135,6 +135,10 @@ impl CodeReviewHeader {
             ));
         }
 
+        if let Some(expansion_button) = &code_review_header_fields.file_expansion_button {
+            right_section_wide.add_child(self.render_file_expansion_button(expansion_button));
+        }
+
         if FeatureFlag::DiffSetAsContext.is_enabled() && !has_no_changes {
             if FeatureFlag::FileAndDiffSetComments.is_enabled() {
                 right_section_wide.add_child(self.render_header_dropdown_button(
@@ -212,6 +216,10 @@ impl CodeReviewHeader {
                 appearance,
                 app,
             ));
+        }
+
+        if let Some(expansion_button) = &code_review_header_fields.file_expansion_button {
+            right_subsection_compact.add_child(self.render_file_expansion_button(expansion_button));
         }
 
         let has_no_changes = state.to_diff_stats().has_no_changes();
@@ -394,6 +402,20 @@ impl CodeReviewHeader {
             stack.finish()
         })
         .with_cursor(Cursor::Arrow)
+        .finish()
+    }
+
+    fn render_file_expansion_button(
+        &self,
+        expansion_button: &ViewHandle<ActionButton>,
+    ) -> Box<dyn Element> {
+        Container::new(
+            ConstrainedBox::new(ChildView::new(expansion_button).finish())
+                .with_height(warp_core::ui::icons::ICON_DIMENSIONS)
+                .with_width(warp_core::ui::icons::ICON_DIMENSIONS)
+                .finish(),
+        )
+        .with_margin_left(4.)
         .finish()
     }
 

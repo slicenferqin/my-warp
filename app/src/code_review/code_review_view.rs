@@ -215,6 +215,7 @@ pub struct CodeReviewHeaderFields {
     pub header_dropdown_button: ViewHandle<ActionButton>,
     pub has_header_menu_items: bool,
     pub file_nav_button: Option<ViewHandle<ActionButton>>,
+    pub file_expansion_button: Option<ViewHandle<ActionButton>>,
     pub primary_git_action_mode: PrimaryGitActionMode,
     pub git_primary_action_button: ViewHandle<ActionButton>,
     pub git_operations_chevron: ViewHandle<ActionButton>,
@@ -364,6 +365,8 @@ pub enum CodeReviewAction {
         line_and_column: Option<LineAndColumnArg>,
     },
     ToggleFileExpanded(PathBuf),
+    SetAllFilesExpanded(bool),
+    ToggleAllFilesExpanded,
     OpenHeaderMenu,
     SetDiffMode(DiffMode),
     ToggleFileSidebar,
@@ -727,6 +730,7 @@ pub struct CodeReviewView {
     maximize_button: ViewHandle<ActionButton>,
     header_dropdown_button: ViewHandle<ActionButton>,
     file_nav_button: ViewHandle<ActionButton>,
+    file_expansion_button: ViewHandle<ActionButton>,
     git_primary_action_button: ViewHandle<ActionButton>,
     git_operations_chevron: ViewHandle<ActionButton>,
     git_operations_menu: ViewHandle<Menu<CodeReviewAction>>,
@@ -1265,6 +1269,13 @@ impl CodeReviewView {
                 .on_click(|ctx| ctx.dispatch_typed_action(CodeReviewAction::ToggleFileSidebar))
         });
 
+        let file_expansion_button = ctx.add_typed_action_view(|_ctx| {
+            ActionButton::new("", NakedTheme)
+                .with_icon(Icon::ExpandUpAndDown)
+                .with_tooltip(warp_i18n::tr("app-code-review-collapse-all-diffs"))
+                .on_click(|ctx| ctx.dispatch_typed_action(CodeReviewAction::ToggleAllFilesExpanded))
+        });
+
         let git_primary_action_button = ctx.add_typed_action_view(|_ctx| {
             ActionButton::new(warp_i18n::tr("app-code-review-commit"), SecondaryTheme)
                 .with_size(ButtonSize::Small)
@@ -1439,6 +1450,7 @@ impl CodeReviewView {
             maximize_button,
             header_dropdown_button,
             file_nav_button,
+            file_expansion_button,
             git_primary_action_button,
             git_operations_chevron,
             git_operations_menu,
@@ -1550,6 +1562,95 @@ impl CodeReviewView {
         self.file_nav_button.update(ctx, |button, ctx| {
             button.set_tooltip(Some(tooltip), ctx);
         });
+    }
+
+    fn all_files_expanded(&self) -> bool {
+        let CodeReviewViewState::Loaded(state) = self.state() else {
+            return false;
+        };
+
+        !state.file_states.is_empty()
+            && state
+                .file_states
+                .values()
+                .all(|file_state| file_state.is_expanded)
+    }
+
+    fn update_file_expansion_button(&self, ctx: &mut ViewContext<Self>) {
+        let all_files_expanded = self.all_files_expanded();
+        let (icon, tooltip) = if all_files_expanded {
+            (
+                Icon::ExpandUp,
+                warp_i18n::tr("app-code-review-collapse-all-diffs"),
+            )
+        } else {
+            (
+                Icon::ExpandDown,
+                warp_i18n::tr("app-code-review-expand-all-diffs"),
+            )
+        };
+
+        self.file_expansion_button.update(ctx, |button, ctx| {
+            button.set_icon(Some(icon), ctx);
+            button.set_tooltip(Some(tooltip), ctx);
+        });
+    }
+
+    fn update_all_file_expansion(&mut self, is_expanded: bool, ctx: &mut ViewContext<Self>) {
+        let chevron_updates = {
+            let Some(repo) = self.active_repo.as_mut() else {
+                return;
+            };
+            let CodeReviewViewState::Loaded(state) = &mut repo.state else {
+                return;
+            };
+
+            state
+                .file_states
+                .values_mut()
+                .enumerate()
+                .map(|(index, file)| {
+                    file.is_expanded = is_expanded;
+                    (
+                        index,
+                        file.file_diff.file_path.clone(),
+                        file.chevron_button.clone(),
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+
+        if let Some(repo) = self.active_repo.as_mut() {
+            for (_, file_path, _) in &chevron_updates {
+                repo.file_expanded.insert(file_path.clone(), is_expanded);
+            }
+        }
+
+        let chevron_icon = if is_expanded {
+            Icon::ChevronDown
+        } else {
+            Icon::ChevronRight
+        };
+
+        for (index, _, chevron_button) in chevron_updates {
+            chevron_button.update(ctx, |button, ctx| {
+                button.set_icon(Some(chevron_icon), ctx);
+            });
+            self.viewported_list_state
+                .invalidate_height_for_index(index);
+        }
+
+        self.update_file_expansion_button(ctx);
+
+        if self.find_model.as_ref(ctx).is_find_bar_open()
+            && FeatureFlag::CodeReviewFind.is_enabled()
+        {
+            self.find_model.update(ctx, |model, model_ctx| {
+                model.run_search(self.editor_handles(), model_ctx);
+            });
+        }
+
+        ctx.notify();
     }
 
     fn open_file_sidebar(&mut self, ctx: &mut ViewContext<Self>) {
@@ -2733,6 +2834,7 @@ impl CodeReviewView {
                     repo.state = CodeReviewViewState::Loaded(diff_data);
                 }
 
+                self.update_file_expansion_button(ctx);
                 self.update_editor_comment_markers(ctx);
                 GlobalBufferModel::handle(ctx).update(ctx, |model, ctx| {
                     model.remove_deallocated_buffers(ctx);
@@ -2851,6 +2953,7 @@ impl CodeReviewView {
             });
         }
 
+        self.update_file_expansion_button(ctx);
         self.recompute_merge_base_and_flush(ctx);
 
         if self.all_editors_loaded() {
@@ -4614,6 +4717,11 @@ impl CodeReviewView {
                 && self.has_file_states()
             {
                 Some(self.file_nav_button.clone())
+            } else {
+                None
+            },
+            file_expansion_button: if self.has_file_states() {
+                Some(self.file_expansion_button.clone())
             } else {
                 None
             },
@@ -7473,7 +7581,15 @@ impl TypedActionView for CodeReviewView {
                     });
                 }
 
+                self.update_file_expansion_button(ctx);
                 ctx.notify();
+            }
+            CodeReviewAction::SetAllFilesExpanded(is_expanded) => {
+                self.update_all_file_expansion(*is_expanded, ctx);
+            }
+            CodeReviewAction::ToggleAllFilesExpanded => {
+                let should_expand = !self.all_files_expanded();
+                self.update_all_file_expansion(should_expand, ctx);
             }
             CodeReviewAction::SetDiffMode(mode) => {
                 self.apply_diff_mode(mode.clone(), ctx);
@@ -7495,7 +7611,7 @@ impl TypedActionView for CodeReviewView {
             CodeReviewAction::FileSelected(file_index) => {
                 // Early-return when repo/state/file is missing to avoid calling
                 // invalidate_height_for_index or scroll_to with an invalid index.
-                let was_expanded = {
+                let (was_expanded, chevron_button) = {
                     let Some(repo) = self.active_repo.as_mut() else {
                         return;
                     };
@@ -7507,8 +7623,17 @@ impl TypedActionView for CodeReviewView {
                     };
                     let was_expanded = file.is_expanded;
                     file.is_expanded = true;
-                    was_expanded
+                    repo.file_expanded
+                        .insert(file.file_diff.file_path.clone(), true);
+                    (was_expanded, file.chevron_button.clone())
                 };
+
+                if !was_expanded {
+                    chevron_button.update(ctx, |button, ctx| {
+                        button.set_icon(Some(Icon::ChevronDown), ctx);
+                    });
+                    self.update_file_expansion_button(ctx);
+                }
 
                 self.viewported_list_state
                     .invalidate_height_for_index(*file_index);

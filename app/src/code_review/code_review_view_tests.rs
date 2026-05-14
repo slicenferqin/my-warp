@@ -940,6 +940,69 @@ fn test_handle_edit_comment_scrolls_with_buffer() {
 }
 
 #[test]
+fn test_toggle_all_files_expanded_updates_every_file_state() {
+    App::test((), |mut app| async move {
+        initialize_test_app(&mut app);
+
+        let repo_path = PathBuf::from("/repo");
+        let file_a = PathBuf::from("a.txt");
+        let file_b = PathBuf::from("b.txt");
+        let editor_a = create_editor_with_content(&mut app, "line a");
+        let editor_b = create_editor_with_content(&mut app, "line b");
+
+        let (window_id, _) = app.add_window(WindowStyle::NotStealFocus, |_| TestView);
+        let state = create_loaded_state_with_editors(
+            &mut app,
+            window_id,
+            vec![(file_a.clone(), editor_a), (file_b.clone(), editor_b)],
+        );
+
+        let diff_state_model = app.add_model(|ctx| DiffStateModel::new(None, ctx));
+        let working_directories_model = app.add_model(|_| WorkingDirectoriesModel::new());
+        let code_review_comment_batch =
+            working_directories_model.update(&mut app, |working_directories, ctx| {
+                working_directories.get_or_create_code_review_comments(repo_path.as_path(), ctx)
+            });
+
+        let code_review_view = app.add_view(window_id, |ctx| {
+            CodeReviewView::new(
+                Some(repo_path.clone()),
+                diff_state_model,
+                code_review_comment_batch,
+                None,
+                ctx,
+            )
+        });
+
+        code_review_view.update(&mut app, |view, view_ctx| {
+            if let Some(repo) = view.active_repo.as_mut() {
+                repo.state = CodeReviewViewState::Loaded(state);
+            }
+
+            view.handle_action(&CodeReviewAction::ToggleAllFilesExpanded, view_ctx);
+
+            let CodeReviewViewState::Loaded(loaded) = view.state() else {
+                panic!("code review should be loaded");
+            };
+            assert!(loaded.file_states.values().all(|file| !file.is_expanded));
+            assert!(view.active_repo.as_ref().is_some_and(|repo| {
+                repo.file_expanded.values().all(|is_expanded| !*is_expanded)
+            }));
+
+            view.handle_action(&CodeReviewAction::ToggleAllFilesExpanded, view_ctx);
+
+            let CodeReviewViewState::Loaded(loaded) = view.state() else {
+                panic!("code review should still be loaded");
+            };
+            assert!(loaded.file_states.values().all(|file| file.is_expanded));
+            assert!(view.active_repo.as_ref().is_some_and(|repo| {
+                repo.file_expanded.values().all(|is_expanded| *is_expanded)
+            }));
+        });
+    });
+}
+
+#[test]
 fn test_active_comments_not_marked_outdated() {
     App::test((), |mut app| async move {
         let _flag_override = FeatureFlag::PRCommentsSlashCommand.override_enabled(true);

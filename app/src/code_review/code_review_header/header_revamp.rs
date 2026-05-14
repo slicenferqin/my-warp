@@ -45,6 +45,10 @@ impl CodeReviewHeader {
             right_section.add_child(Self::render_file_nav_button(nav_button));
         }
 
+        if let Some(expansion_button) = &code_review_header_fields.file_expansion_button {
+            right_section.add_child(self.render_file_expansion_button(expansion_button));
+        }
+
         if code_review_header_fields.has_header_menu_items {
             right_section.add_child(self.render_new_header_dropdown_button(
                 &code_review_header_fields.header_dropdown_button,
