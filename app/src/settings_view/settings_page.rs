@@ -10,6 +10,7 @@ use super::{
     ai_page::{AISettingsPageAction, AISettingsPageView},
     appearance_page::AppearanceSettingsPageView,
     billing_and_usage_page::BillingAndUsagePageView,
+    billing_and_usage_page_v2::BillingAndUsagePageV2View,
     code_page::CodeSettingsPageView,
     environments_page::EnvironmentsPageView,
     features_page::FeaturesPageView,
@@ -70,6 +71,7 @@ const ALTERNATING_LIST_ITEM_PADDING: f32 = 8.0;
 const GREY_TEXT_OPACITY: u8 = 60;
 const MIN_PAGE_WIDTH: f32 = 520.;
 const MAX_PAGE_WIDTH: f32 = 800.;
+const INFO_TOOLTIP_MAX_WIDTH: f32 = 320.;
 
 /// Left margin for top-level sidebar nav items (pages and umbrella labels).
 pub(super) const NAV_ITEM_LEFT_MARGIN: f32 = 12.;
@@ -120,6 +122,7 @@ pub enum SettingsPageViewHandle {
     AI(ViewHandle<AISettingsPageView>),
     CloudEnvironments(ViewHandle<EnvironmentsPageView>),
     BillingAndUsage(ViewHandle<BillingAndUsagePageView>),
+    BillingAndUsageV2(ViewHandle<BillingAndUsagePageV2View>),
     MCPServers(ViewHandle<MCPServersSettingsPageView>),
     WarpDrive(ViewHandle<WarpDriveSettingsPageView>),
 }
@@ -143,6 +146,7 @@ impl SettingsPageViewHandle {
             AI(view_handle) => ChildView::new(view_handle).finish(),
             CloudEnvironments(view_handle) => ChildView::new(view_handle).finish(),
             BillingAndUsage(view_handle) => ChildView::new(view_handle).finish(),
+            BillingAndUsageV2(view_handle) => ChildView::new(view_handle).finish(),
             MCPServers(view_handle) => ChildView::new(view_handle).finish(),
             WarpDrive(view_handle) => ChildView::new(view_handle).finish(),
         }
@@ -184,7 +188,7 @@ impl SettingsPage {
                 },
                 self.button_state_handle.clone(),
             )
-            .with_text_label(self.section.localized_label() + &match_data.to_string())
+            .with_text_label(self.section.to_string() + &match_data.to_string())
             .with_style(
                 UiComponentStyles::default()
                     .set_border_width(0.)
@@ -388,13 +392,12 @@ pub fn render_separator(appearance: &Appearance) -> Box<dyn Element> {
 }
 
 pub fn render_full_pane_width_ai_button(
-    text: impl Into<String>,
+    text: &str,
     is_any_ai_enabled: bool,
     mouse_state: MouseStateHandle,
     action: AISettingsPageAction,
     appearance: &Appearance,
 ) -> Box<dyn Element> {
-    let text = text.into();
     let (text_color, bg, icon_bg) = if is_any_ai_enabled {
         (
             appearance
@@ -412,7 +415,7 @@ pub fn render_full_pane_width_ai_button(
         )
     };
 
-    let mut button = Hoverable::new(mouse_state, move |_| {
+    let mut button = Hoverable::new(mouse_state, |_| {
         Container::new(
             Flex::row()
                 .with_main_axis_size(MainAxisSize::Max)
@@ -423,7 +426,7 @@ pub fn render_full_pane_width_ai_button(
                         1.,
                         appearance
                             .ui_builder()
-                            .wrappable_text(text.clone(), true)
+                            .wrappable_text(text.to_string(), true)
                             .with_style(UiComponentStyles {
                                 font_size: Some(CONTENT_FONT_SIZE),
                                 font_color: Some(text_color),
@@ -552,26 +555,54 @@ pub fn render_info_icon<T: Clone + Action>(
     appearance: &Appearance,
     additional_info: AdditionalInfo<T>,
 ) -> Box<dyn Element> {
-    let info_button = appearance
-        .ui_builder()
-        .info_button_with_tooltip(
-            13.,
-            additional_info
-                .tooltip_override_text
-                .unwrap_or_else(|| warp_i18n::tr("settings-tooltip-learn-more-docs")),
-            additional_info.mouse_state.clone(),
+    let tooltip_text = additional_info
+        .tooltip_override_text
+        .unwrap_or("Click to learn more in docs".to_owned());
+    let icon = Container::new(
+        ConstrainedBox::new(
+            Icon::Info
+                .to_warpui_icon(appearance.theme().active_ui_text_color())
+                .finish(),
         )
-        .on_click(move |ctx, _, _| {
-            if let Some(on_click_action) = &additional_info.on_click_action {
-                ctx.dispatch_typed_action(on_click_action.clone());
-            }
-        })
-        .finish();
+        .with_width(13.)
+        .with_height(13.)
+        .finish(),
+    )
+    .finish();
 
-    Container::new(info_button)
+    let mut info_button = Hoverable::new(additional_info.mouse_state.clone(), move |state| {
+        let mut stack = Stack::new().with_child(icon);
+        if state.is_hovered() {
+            let tool_tip = ConstrainedBox::new(
+                appearance
+                    .ui_builder()
+                    .tool_tip(tooltip_text)
+                    .build()
+                    .finish(),
+            )
+            .with_max_width(INFO_TOOLTIP_MAX_WIDTH)
+            .finish();
+            stack.add_positioned_child(
+                tool_tip,
+                OffsetPositioning::offset_from_parent(
+                    vec2f(0., -3.),
+                    ParentOffsetBounds::WindowByPosition,
+                    ParentAnchor::TopMiddle,
+                    ChildAnchor::BottomMiddle,
+                ),
+            );
+        }
+        stack.finish()
+    })
+    .with_cursor(Cursor::PointingHand);
+
+    if let Some(on_click_action) = additional_info.on_click_action {
+        info_button = info_button
+            .on_click(move |ctx, _, _| ctx.dispatch_typed_action(on_click_action.clone()));
+    }
+
+    Container::new(Box::new(info_button))
         .with_margin_left(4.)
-        // Since the icon is smaller than the font, we need some margin to be in alignment.
-        .with_margin_top(1.5)
         .finish()
 }
 
@@ -584,16 +615,12 @@ pub fn render_local_only_icon(
         .ui_builder()
         .local_only_icon_with_tooltip(
             13.,
-            custom_tooltip.unwrap_or_else(|| warp_i18n::tr("settings-tooltip-local-only")),
+            custom_tooltip.unwrap_or("This setting is not synced to your other devices".to_owned()),
             mouse_state.clone(),
         )
         .finish();
 
-    Container::new(info_button)
-        .with_margin_left(4.)
-        // Since the icon is smaller than the font, we need some margin to be in alignment.
-        .with_margin_top(1.5)
-        .finish()
+    Container::new(info_button).with_margin_left(4.).finish()
 }
 
 pub fn render_body_item_label<T: Clone + Action>(
@@ -737,13 +764,9 @@ pub fn render_body_item_label_internal<T: Clone + Action>(
 }
 
 pub fn render_page_title(text: &str, size: f32, appearance: &Appearance) -> Box<dyn Element> {
-    let title = text
-        .parse::<SettingsSection>()
-        .map_or_else(|_| text.to_string(), |section| section.localized_label());
-
     Container::new(
         Align::new(
-            Text::new_inline(title, appearance.ui_font_family(), size)
+            Text::new_inline(text.to_string(), appearance.ui_font_family(), size)
                 .with_style(Properties::default().weight(Weight::Bold))
                 .with_color(appearance.theme().active_ui_text_color().into())
                 .finish(),
@@ -1007,7 +1030,8 @@ pub(crate) fn render_settings_info_banner(
     .finish()
 }
 
-const WORKSPACE_OVERRIDE_TOOLTIP_TEXT_KEY: &str = "settings-workspace-override-tooltip";
+const WORKSPACE_OVERRIDE_TOOLTIP_TEXT: &str =
+    "This option is enforced by your organization's settings and cannot be customized.";
 
 pub struct InputListItem<SettingsPageAction: Action + Clone> {
     pub item: String,
@@ -1116,7 +1140,7 @@ fn render_workspace_override_row_tooltip(
         if state.is_hovered() {
             let tooltip = appearance
                 .ui_builder()
-                .tool_tip(warp_i18n::tr(WORKSPACE_OVERRIDE_TOOLTIP_TEXT_KEY))
+                .tool_tip(WORKSPACE_OVERRIDE_TOOLTIP_TEXT.to_string())
                 .build()
                 .finish();
             stack.add_positioned_child(
@@ -1612,9 +1636,8 @@ impl<V: warpui::View> PageType<V> {
                 if let Some(widget) = widget {
                     if widget.should_render(app) {
                         if let Some(title) = title {
-                            let title = warp_i18n::tr(title);
                             let col = Flex::column()
-                                .with_child(render_page_title(&title, HEADER_FONT_SIZE, appearance))
+                                .with_child(render_page_title(title, HEADER_FONT_SIZE, appearance))
                                 .with_child(widget.render_widget(view, false, appearance, app));
                             page = col.finish();
                         } else {
@@ -1632,11 +1655,7 @@ impl<V: warpui::View> PageType<V> {
             } => {
                 let mut page = Flex::column();
                 if let Some(title) = title {
-                    page.add_child(render_page_title(
-                        &warp_i18n::tr(title),
-                        HEADER_FONT_SIZE,
-                        appearance,
-                    ));
+                    page.add_child(render_page_title(title, HEADER_FONT_SIZE, appearance));
                 }
                 for widget in widgets {
                     let highlighted =
@@ -1655,24 +1674,19 @@ impl<V: warpui::View> PageType<V> {
             } => {
                 let mut page = Flex::column();
                 if let Some(title) = title {
-                    page.add_child(render_page_title(
-                        &warp_i18n::tr(title),
-                        HEADER_FONT_SIZE,
-                        appearance,
-                    ));
+                    page.add_child(render_page_title(title, HEADER_FONT_SIZE, appearance));
                 }
                 let num_categories = categories.len();
                 for (i, category) in categories.into_iter().enumerate() {
                     if !category.title.is_empty() {
-                        let category_title = warp_i18n::tr(category.title);
                         if let Some(subtitle) = category.subtitle {
                             page.add_child(render_sub_header_with_description(
                                 appearance,
-                                category_title,
-                                warp_i18n::tr(subtitle),
+                                category.title,
+                                subtitle,
                             ));
                         } else {
-                            page.add_child(render_sub_header(appearance, category_title, None));
+                            page.add_child(render_sub_header(appearance, category.title, None));
                         }
                     }
                     for widget in &category.widgets {
@@ -1914,5 +1928,5 @@ pub(super) fn build_reset_button(
             font_size: Some(appearance.ui_font_size() * 0.8),
             ..Default::default()
         })
-        .with_text_label(warp_i18n::tr("settings-reset-to-default"))
+        .with_text_label("Reset to default".to_owned())
 }

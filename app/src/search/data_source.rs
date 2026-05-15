@@ -167,6 +167,9 @@ pub enum QueryFilter {
     /// Filter results for open sessions.
     Sessions,
 
+    /// Filter results for open tabs.
+    Tabs,
+
     /// Filter results for all conversations.
     Conversations,
 
@@ -229,43 +232,36 @@ impl QueryFilter {
     }
 
     /// Returns placeholder text to be shown in an empty input when the filter is active.
-    pub fn placeholder_text(&self) -> String {
-        warp_i18n::tr(self.placeholder_text_i18n_key())
-    }
-
-    fn placeholder_text_i18n_key(&self) -> &'static str {
+    pub fn placeholder_text(&self) -> &'static str {
         match self {
-            QueryFilter::History => "search-filter-placeholder-history",
-            QueryFilter::Workflows => "search-filter-placeholder-workflows",
-            QueryFilter::AgentModeWorkflows => "search-filter-placeholder-agent-mode-workflows",
-            QueryFilter::Notebooks => "search-filter-placeholder-notebooks",
-            QueryFilter::Plans => "search-filter-placeholder-plans",
-            QueryFilter::NaturalLanguage => "search-filter-placeholder-natural-language",
-            QueryFilter::Actions => "search-filter-placeholder-actions",
-            QueryFilter::Sessions => "search-filter-placeholder-sessions",
-            QueryFilter::Conversations => "search-filter-placeholder-conversations",
-            QueryFilter::HistoricalConversations => {
-                "search-filter-placeholder-historical-conversations"
-            }
-            QueryFilter::LaunchConfigurations => "search-filter-placeholder-launch-configurations",
-            QueryFilter::Drive => "search-filter-placeholder-drive",
-            QueryFilter::EnvironmentVariables => "search-filter-placeholder-environment-variables",
-            QueryFilter::PromptHistory => "search-filter-placeholder-prompt-history",
-            QueryFilter::Files => "search-filter-placeholder-files",
-            QueryFilter::Commands => "search-filter-placeholder-commands",
-            QueryFilter::Blocks => "search-filter-placeholder-blocks",
-            QueryFilter::Code => "search-filter-placeholder-code",
-            QueryFilter::Rules => "search-filter-placeholder-rules",
-            QueryFilter::Repos => "search-filter-placeholder-repos",
-            QueryFilter::DiffSets => "search-filter-placeholder-diff-sets",
-            QueryFilter::StaticSlashCommands => "search-filter-placeholder-static-slash-commands",
-            QueryFilter::Skills => "search-filter-placeholder-skills",
-            QueryFilter::BaseModels => "search-filter-placeholder-base-models",
-            QueryFilter::FullTerminalUseModels => {
-                "search-filter-placeholder-full-terminal-use-models"
-            }
+            QueryFilter::History => "Search history",
+            QueryFilter::Workflows => "Search workflows",
+            QueryFilter::AgentModeWorkflows => "Search prompts",
+            QueryFilter::Notebooks => "Search notebooks",
+            QueryFilter::Plans => "Search plans",
+            QueryFilter::NaturalLanguage => "e.g. replace string in file",
+            QueryFilter::Actions => "Search actions",
+            QueryFilter::Sessions => "Search sessions",
+            QueryFilter::Tabs => "Search tabs",
+            QueryFilter::Conversations => "Search conversations",
+            QueryFilter::HistoricalConversations => "Search historical conversations",
+            QueryFilter::LaunchConfigurations => "Search launch configurations",
+            QueryFilter::Drive => "Search objects in drive",
+            QueryFilter::EnvironmentVariables => "Search environment variables",
+            QueryFilter::PromptHistory => "Search prompt history",
+            QueryFilter::Files => "Search files",
+            QueryFilter::Commands => "Search commands",
+            QueryFilter::Blocks => "Search blocks",
+            QueryFilter::Code => "Search code symbols",
+            QueryFilter::Rules => "Search AI rules",
+            QueryFilter::Repos => "Search code repos",
+            QueryFilter::DiffSets => "Search diff sets",
+            QueryFilter::StaticSlashCommands => "Search static slash commands",
+            QueryFilter::Skills => "Search skills",
+            QueryFilter::BaseModels => "Search base models",
+            QueryFilter::FullTerminalUseModels => "Search full terminal use models",
             QueryFilter::CurrentDirectoryConversations => {
-                "search-filter-placeholder-current-directory-conversations"
+                "Search conversations in current directory"
             }
         }
     }
@@ -281,6 +277,7 @@ impl QueryFilter {
             QueryFilter::NaturalLanguage => &NATURAL_LANGUAGE_FILTER_ATOM,
             QueryFilter::Actions => &ACTIONS_FILTER_ATOM,
             QueryFilter::Sessions => &SESSIONS_FILTER_ATOM,
+            QueryFilter::Tabs => &NO_FILTER_ATOM,
             QueryFilter::Conversations => &CONVERSATIONS_FILTER_ATOM,
             QueryFilter::LaunchConfigurations => &LAUNCH_CONFIG_FILTER_ATOM,
             QueryFilter::Drive => &DRIVE_FILTER_ATOM,
@@ -303,40 +300,35 @@ impl QueryFilter {
     }
 
     /// Returns the display name (e.g. the string to be used in UI) representing the filter.
-    pub fn display_name(&self) -> String {
-        warp_i18n::tr(self.display_name_i18n_key())
-    }
-
-    fn display_name_i18n_key(&self) -> &'static str {
+    pub fn display_name(&self) -> &'static str {
         match self {
-            QueryFilter::History => "search-filter-name-history",
-            QueryFilter::Workflows => "search-filter-name-workflows",
-            QueryFilter::AgentModeWorkflows => "search-filter-name-agent-mode-workflows",
-            QueryFilter::Notebooks => "search-filter-name-notebooks",
-            QueryFilter::Plans => "search-filter-name-plans",
-            QueryFilter::NaturalLanguage => "search-filter-name-natural-language",
-            QueryFilter::Actions => "search-filter-name-actions",
-            QueryFilter::Sessions => "search-filter-name-sessions",
-            QueryFilter::Conversations => "search-filter-name-conversations",
-            QueryFilter::LaunchConfigurations => "search-filter-name-launch-configurations",
-            QueryFilter::Drive => "search-filter-name-drive",
-            QueryFilter::EnvironmentVariables => "search-filter-name-environment-variables",
-            QueryFilter::PromptHistory => "search-filter-name-prompt-history",
-            QueryFilter::Files => "search-filter-name-files",
-            QueryFilter::Commands => "search-filter-name-commands",
-            QueryFilter::Blocks => "search-filter-name-blocks",
-            QueryFilter::Code => "search-filter-name-code",
-            QueryFilter::Rules => "search-filter-name-rules",
-            QueryFilter::Repos => "search-filter-name-repos",
-            QueryFilter::DiffSets => "search-filter-name-diff-sets",
-            QueryFilter::StaticSlashCommands => "search-filter-name-static-slash-commands",
-            QueryFilter::HistoricalConversations => "search-filter-name-historical-conversations",
-            QueryFilter::Skills => "search-filter-name-skills",
-            QueryFilter::BaseModels => "search-filter-name-base-models",
-            QueryFilter::FullTerminalUseModels => "search-filter-name-full-terminal-use-models",
-            QueryFilter::CurrentDirectoryConversations => {
-                "search-filter-name-current-directory-conversations"
-            }
+            QueryFilter::History => "history",
+            QueryFilter::Workflows => "workflows",
+            QueryFilter::AgentModeWorkflows => "prompts",
+            QueryFilter::Notebooks => "notebooks",
+            QueryFilter::Plans => "plans",
+            QueryFilter::NaturalLanguage => "AI command suggestions",
+            QueryFilter::Actions => "actions",
+            QueryFilter::Sessions => "sessions",
+            QueryFilter::Tabs => "tabs",
+            QueryFilter::Conversations => "conversations",
+            QueryFilter::LaunchConfigurations => "launch configurations",
+            QueryFilter::Drive => "Warp Drive",
+            QueryFilter::EnvironmentVariables => "environment variables",
+            QueryFilter::PromptHistory => "prompt history",
+            QueryFilter::Files => "files",
+            QueryFilter::Commands => "commands",
+            QueryFilter::Blocks => "blocks",
+            QueryFilter::Code => "code",
+            QueryFilter::Rules => "rules",
+            QueryFilter::Repos => "repos",
+            QueryFilter::DiffSets => "diff sets",
+            QueryFilter::StaticSlashCommands => "slash commands",
+            QueryFilter::HistoricalConversations => "historical conversations",
+            QueryFilter::Skills => "skills",
+            QueryFilter::BaseModels => "base models",
+            QueryFilter::FullTerminalUseModels => "full terminal use models",
+            QueryFilter::CurrentDirectoryConversations => "current directory conversations",
         }
     }
 
@@ -356,6 +348,7 @@ impl QueryFilter {
             }
             QueryFilter::Actions => None,
             QueryFilter::Sessions => Some("bundled/svg/terminal-input.svg"),
+            QueryFilter::Tabs => Some("bundled/svg/terminal-input.svg"),
             QueryFilter::Conversations | QueryFilter::HistoricalConversations => {
                 Some("bundled/svg/conversation.svg")
             }

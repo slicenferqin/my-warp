@@ -21,30 +21,30 @@ const HERO_IMAGE_PATH: &str = "async/png/onboarding/hoa_welcome_banner.png";
 
 struct FeatureItem {
     icon: Icon,
-    title_key: &'static str,
-    description_key: &'static str,
+    title: &'static str,
+    description: &'static str,
 }
 
 const FEATURE_ITEMS: &[FeatureItem] = &[
     FeatureItem {
         icon: Icon::LayoutAlt01,
-        title_key: "app-hoa-welcome-feature-vertical-tabs-title",
-        description_key: "app-hoa-welcome-feature-vertical-tabs-description",
+        title: "Vertical tabs",
+        description: "Rich tab titles and metadata like git branch, worktree, and PR. Fully customizable.",
     },
     FeatureItem {
         icon: Icon::Sliders,
-        title_key: "app-hoa-welcome-feature-tab-configs-title",
-        description_key: "app-hoa-welcome-feature-tab-configs-description",
+        title: "Tab configs",
+        description: "Tab-level schema to set your directory, startup commands, theme, and worktree with one click",
     },
     FeatureItem {
         icon: Icon::Inbox,
-        title_key: "app-hoa-welcome-feature-agent-inbox-title",
-        description_key: "app-hoa-welcome-feature-agent-inbox-description",
+        title: "Agent inbox",
+        description: "Notifications when any agent needs your attention, also accessible in a central inbox",
     },
     FeatureItem {
         icon: Icon::MessageCheckSquare,
-        title_key: "app-hoa-welcome-feature-native-code-review-title",
-        description_key: "app-hoa-welcome-feature-native-code-review-description",
+        title: "Native code review",
+        description: "Send inline comments from Warp's code review directly to Claude Code, Codex, or OpenCode",
     },
 ];
 
@@ -85,24 +85,28 @@ pub fn render_welcome_banner(
     );
 
     // "New" badge
-    let badge = Container::new(
-        Text::new_inline(
-            warp_i18n::tr("app-hoa-welcome-new-badge"),
-            appearance.ui_font_family(),
-            14.,
-        )
+    let text = Text::new_inline("New".to_string(), appearance.ui_font_family(), 14.)
         .with_color(PhenomenonStyle::modal_badge_text())
+        .finish();
+    let badge = ConstrainedBox::new(
+        Container::new(
+            Flex::row()
+                .with_cross_axis_alignment(CrossAxisAlignment::Center)
+                .with_main_axis_size(MainAxisSize::Min)
+                .with_child(text)
+                .finish(),
+        )
+        .with_horizontal_padding(8.)
+        .with_background(Fill::Solid(PhenomenonStyle::modal_badge_background()))
+        .with_corner_radius(CornerRadius::with_all(Radius::Percentage(50.)))
         .finish(),
     )
-    .with_horizontal_padding(8.)
-    .with_vertical_padding(2.)
-    .with_corner_radius(CornerRadius::with_all(Radius::Pixels(4.)))
-    .with_background(Fill::Solid(PhenomenonStyle::modal_badge_background()))
+    .with_height(24.)
     .finish();
 
     // Title
     let title = Text::new(
-        warp_i18n::tr("app-hoa-welcome-title"),
+        "Introducing universal agent support: level up any coding agent with Warp",
         appearance.ui_font_family(),
         20.,
     )
@@ -129,22 +133,14 @@ pub fn render_welcome_banner(
             .with_cross_axis_alignment(CrossAxisAlignment::Start)
             .with_spacing(2.)
             .with_child(
-                Text::new_inline(
-                    warp_i18n::tr(item.title_key),
-                    appearance.ui_font_family(),
-                    14.,
-                )
-                .with_color(PhenomenonStyle::modal_feature_title_text())
-                .finish(),
+                Text::new_inline(item.title.to_string(), appearance.ui_font_family(), 14.)
+                    .with_color(PhenomenonStyle::modal_feature_title_text())
+                    .finish(),
             )
             .with_child(
-                Text::new(
-                    warp_i18n::tr(item.description_key),
-                    appearance.ui_font_family(),
-                    14.,
-                )
-                .with_color(PhenomenonStyle::modal_feature_description_text())
-                .finish(),
+                Text::new(item.description, appearance.ui_font_family(), 14.)
+                    .with_color(PhenomenonStyle::modal_feature_description_text())
+                    .finish(),
             )
             .finish();
 

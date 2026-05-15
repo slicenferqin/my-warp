@@ -2778,6 +2778,7 @@ impl FeaturesPageView {
             let values = vec![
                 CtrlTabBehavior::ActivatePrevNextTab,
                 CtrlTabBehavior::CycleMostRecentSession,
+                CtrlTabBehavior::CycleMostRecentTab,
             ];
 
             let current_value = *KeysSettings::as_ref(ctx).ctrl_tab_behavior;
